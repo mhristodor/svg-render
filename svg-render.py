@@ -26,14 +26,20 @@ def draw_rect(draw, xcoord = 0, ycoord = 0, width = 0, height = 0, rx = 0, ry = 
 		ry = rx
 
 
-
-	draw.line([(xcoord + rx,ycoord),(xcoord + rx,ycoord + height),(xcoord + width - rx,ycoord + height),(xcoord + width - rx ,ycoord),
-		(xcoord + rx,ycoord)], fill = style["stroke"], width = style["stroke-width"], joint = "curve")
-	
-	draw.arc([xcoord,ycoord,xcoord + rx * 2 ,ycoord + ry * 2 ], 180, 270, style["stroke"] ,width = style["stroke-width"])
-	draw.arc([xcoord,ycoord,xcoord + rx * 2 ,ycoord + ry * 2 ], 90, 180, style["stroke"] ,width = style["stroke-width"])
-	draw.arc([xcoord + width - rx*2,ycoord + height-ry*2,xcoord + width,ycoord + height], 0, 90, style["stroke"] ,width = style["stroke-width"])
-	draw.arc([xcoord + width - rx*2,ycoord + height-ry*2,xcoord + width,ycoord + height], 270, 0, style["stroke"] ,width = style["stroke-width"])
+	if rx == ry == 0:
+		draw.line([(xcoord + rx,ycoord),(xcoord + rx,ycoord + height),(xcoord + width - rx,ycoord + height),(xcoord + width - rx ,ycoord),
+			(xcoord + rx,ycoord)], fill = style["stroke"], width = style["stroke-width"], joint = "curve")
+	else:
+		draw.line([(xcoord + rx,ycoord + height),(xcoord + width - rx,ycoord + height)], fill = style["stroke"], width = style["stroke-width"], joint = "curve")
+		draw.line([(xcoord + rx,ycoord),(xcoord - rx + width,ycoord)], fill = style["stroke"], width = style["stroke-width"], joint = "curve")
+		
+		draw.line([(xcoord,ycoord + ry),(xcoord,ycoord + height - ry)], fill = style["stroke"], width = style["stroke-width"], joint = "curve")
+		draw.line([(xcoord + width,ycoord + ry),(xcoord + width,ycoord + height - ry)], fill = style["stroke"], width = style["stroke-width"], joint = "curve")
+		
+		draw.arc([xcoord,ycoord,xcoord + rx * 2 ,ycoord + ry * 2 ], 180, 270, style["stroke"] ,width = style["stroke-width"])
+		draw.arc([xcoord,ycoord + height - 2 * ry,xcoord + rx * 2 ,ycoord + height], 90, 180, style["stroke"] ,width = style["stroke-width"])
+		draw.arc([xcoord + width - rx*2,ycoord + height-ry*2,xcoord + width,ycoord + height], 0, 90, style["stroke"] ,width = style["stroke-width"])
+		draw.arc([xcoord + width - rx*2,ycoord ,xcoord + width,ycoord + ry * 2], 270, 0, style["stroke"] ,width = style["stroke-width"])
 
 	if style["fill"] != None:
 		ImageDraw.floodfill(im, ((xcoord + width)/2 , (ycoord + height)/2), style["fill"])
@@ -50,6 +56,6 @@ fill_coll = "Red"
 fill_tr = (int(colors.to_rgb(fill_coll)[0])*255,int(colors.to_rgb(fill_coll)[1])*255,int(colors.to_rgb(fill_coll)[2])*255)
 
 style = {"fill":fill_tr,"stroke":"Green","stroke-width" : 4}
-draw_rect(draw,xcoord= 25 , ycoord = 67, width = 400, height = 90, style = style, rx = 30, ry = 50)
+draw_rect(draw,xcoord= 20 , ycoord = 20, width = 300, height = 90, style = style, rx = 95, ry = 15)
 
 im.save("test.png", "PNG")
