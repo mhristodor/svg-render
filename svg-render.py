@@ -64,6 +64,24 @@ def draw_circle(draw, cx = 0 , cy = 0, r = 0, style = {"fill" : None, "stroke" :
 
 	return 
 
+def draw_ellipse(draw, cx = 0 , cy = 0, rx = 0, ry = 0, style = {"fill" : None, "stroke" : "Black", "stroke-width" : 1}):
+
+	if "fill" not in style.keys():
+		style["fill"] = None
+	
+	if "stroke" not in style.keys():
+		style["stroke"] = "Black"
+
+	if "stroke-width" not in style.keys():
+		style["stroke-width"] = 1
+
+	draw.arc([cx - rx,cy - ry,cx + rx, cy + ry], 0, 360, style["stroke"] ,width = style["stroke-width"])
+	
+	if style["fill"] != None:
+		ImageDraw.floodfill(im, (cx, cy), style["fill"])
+
+	return 
+
 tree = ET.parse('test.svg')
 root = tree.getroot()
 
@@ -76,5 +94,7 @@ fill_tr = (int(colors.to_rgb(fill_coll)[0])*255,int(colors.to_rgb(fill_coll)[1])
 style = {"fill":fill_tr,"stroke":"Green","stroke-width" : 4}
 draw_rect(draw,xcoord= 20 , ycoord = 20, width = 300, height = 90, style = style, rx = 95, ry = 15)
 draw_circle(draw, cx = 500, cy = 500, r = 100, style = style)
+draw_ellipse(draw, cx = 1000, cy = 500, rx = 100, ry = 50, style = style)
+
 
 im.save("test.png", "PNG")
