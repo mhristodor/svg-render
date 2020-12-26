@@ -10,89 +10,89 @@ import matplotlib
 import matplotlib.patches as patches
 
 def getAngle(cx,cy,x,y):
-	angle = math.atan2(cx-x, cy-y) * (180/math.pi) + 90
-	if angle < 0:
-		angle += 360
+    angle = math.atan2(cx-x, cy-y) * (180/math.pi) + 90
+    if angle < 0:
+        angle += 360
 
-	return angle
+    return angle
 
 def vectorAngle (ux,uy,vx,vy):
-	# vector_1 = [ux,uy]
-	# vector_2 = [vx,vy]
+    # vector_1 = [ux,uy]
+    # vector_2 = [vx,vy]
 
-	# unit_vector_1 = vector_1 / np.linalg.norm(vector_1)
-	# unit_vector_2 = vector_2 / np.linalg.norm(vector_2)
-	# dot_product = np.dot(unit_vector_1, unit_vector_2)
-	
-	# print(np.arccos(dot_product))
+    # unit_vector_1 = vector_1 / np.linalg.norm(vector_1)
+    # unit_vector_2 = vector_2 / np.linalg.norm(vector_2)
+    # dot_product = np.dot(unit_vector_1, unit_vector_2)
+    
+    # print(np.arccos(dot_product))
 
-	sign = None 
-	if ux * vy - uy * vx < 0:
-		sign = -1
-	else:
-		sign = 1
+    sign = None 
+    if ux * vy - uy * vx < 0:
+        sign = -1
+    else:
+        sign = 1
 
-	ua = math.sqrt(ux*ux + uy * uy)
-	va = math.sqrt(vx * vx + vy * vy)
-	dot = ux * vx + uy * vy
+    ua = math.sqrt(ux*ux + uy * uy)
+    va = math.sqrt(vx * vx + vy * vy)
+    dot = ux * vx + uy * vy
 
-	# print(sign * math.acos(dot / (ua * va)))
+    # print(sign * math.acos(dot / (ua * va)))
 
-	return sign * math.acos(dot / (ua * va))
+    return sign * math.acos(dot / (ua * va))
 
 def get_center(x1,y1,x2,y2,fa,fs,rx,ry,phi):
-	sinphi = math.sin(math.radians(phi))
-	cosphi = math.cos(math.radians(phi))
+    sinphi = math.sin(math.radians(phi))
+    cosphi = math.cos(math.radians(phi))
 
-	x = cosphi * (x1 - x2) / 2 + sinphi * (y1 - y2) / 2
-	y = -sinphi * (x1 - x2) / 2 + cosphi * (y1 - y2) / 2
-	 
-	px = x * x
-	py = y * y
+    x = cosphi * (x1 - x2) / 2 + sinphi * (y1 - y2) / 2
+    y = -sinphi * (x1 - x2) / 2 + cosphi * (y1 - y2) / 2
+     
+    px = x * x
+    py = y * y
 
-	prx = rx * rx 
-	pry = ry * ry 
+    prx = rx * rx 
+    pry = ry * ry 
 
-	L = px/prx + py/pry
+    L = px/prx + py/pry
 
-	if L > 1:
-		rx = math.sqrt(L) * abs(rx)
-		ry = math.sqrt(L) * abs(ry)
-	else:
-		rx = abs(rx)
-		ry = abs(ry)
+    if L > 1:
+        rx = math.sqrt(L) * abs(rx)
+        ry = math.sqrt(L) * abs(ry)
+    else:
+        rx = abs(rx)
+        ry = abs(ry)
 
-	sign = None
+    sign = None
 
-	if fa == fs:
-		sign = -1
-	else:
-		sign = 1
+    if fa == fs:
+        sign = -1
+    else:
+        sign = 1
 
-	M = math.sqrt(abs(((prx * pry - prx * py - pry * px) / (prx * py + pry * px)))) * sign 
+    M = math.sqrt(abs(((prx * pry - prx * py - pry * px) / (prx * py + pry * px)))) * sign 
 
-	_cx = M * (rx * y) / ry
-	_cy = M * -(ry * x) / rx
+    _cx = M * (rx * y) / ry
+    _cy = M * -(ry * x) / rx
 
-	cx = cosphi * _cx - sinphi * _cy + (x1 + x2) / 2
-	cy = sinphi * _cx + cosphi * _cy + (y1 + y2) / 2
+    cx = cosphi * _cx - sinphi * _cy + (x1 + x2) / 2
+    cy = sinphi * _cx + cosphi * _cy + (y1 + y2) / 2
 
-	theta = math.degrees(vectorAngle(1,0,(x - _cx) / rx,(y - _cy) / ry)) 
+    theta = math.degrees(vectorAngle(1,0,(x - _cx) / rx,(y - _cy) / ry)) 
 
-	_dTheta = math.degrees(vectorAngle((x - _cx) / rx,(y - _cy) / ry,(-x - _cx) / rx,(-y - _cy) / ry)) %360
+    _dTheta = math.degrees(vectorAngle((x - _cx) / rx,(y - _cy) / ry,(-x - _cx) / rx,(-y - _cy) / ry)) %360
 
-	if fs == 0 and _dTheta > 0:
-		_dTheta -= 360
-	elif fs == 1 and _dTheta < 0:
-		_dTheta += 360
+    if fs == 0 and _dTheta > 0:
+        _dTheta -= 360
+    elif fs == 1 and _dTheta < 0:
+        _dTheta += 360
 
-	# if fa == 0 and theta > 0:
-	# 	theta -= 360
-	# elif fa == 1 and theta < 0:
-	# 	theta += 360
+    # if fa == 0 and theta > 0:
+    #     theta -= 360
+    # elif fa == 1 and theta < 0:
+    #     theta += 360
 
-	# return cx,cy,theta,math.degrees(math.radians(_dTheta))
-	return cx, cy, getAngle(cx,cy,x1,y1), getAngle(cx,cy,x2,y2)
+    # return cx,cy,theta,math.degrees(math.radians(_dTheta))
+    return cx, cy, getAngle(cx,cy,x1,y1), getAngle(cx,cy,x2,y2)
 
 
 def line(p1, p2):
@@ -120,404 +120,404 @@ def getLocation(coorArr, i, j, t):
 def draw_rect(draw, xcoord = 0, ycoord = 0, width = 0, height = 0, rx = 0, ry = 0, style = {"fill" : None, "stroke" : "Black", "stroke-width" : 1}):
 
 
-	if "fill" not in style.keys():
-		style["fill"] = None
-	
-	if "stroke" not in style.keys():
-		style["stroke"] = "Black"
+    if "fill" not in style.keys():
+        style["fill"] = None
+    
+    if "stroke" not in style.keys():
+        style["stroke"] = "Black"
 
-	if "stroke-width" not in style.keys():
-		style["stroke-width"] = 1
+    if "stroke-width" not in style.keys():
+        style["stroke-width"] = 1
 
-	if rx == 0 and ry != 0:
-		rx = ry
+    if rx == 0 and ry != 0:
+        rx = ry
 
-	if ry == 0 and rx != 0:
-		ry = rx
+    if ry == 0 and rx != 0:
+        ry = rx
 
 
-	if rx == ry == 0:
-		draw.line([(xcoord + rx,ycoord),(xcoord + rx,ycoord + height),(xcoord + width - rx,ycoord + height),(xcoord + width - rx ,ycoord),
-			(xcoord + rx,ycoord)], fill = style["stroke"], width = style["stroke-width"], joint = "curve")
-	else:
-		draw.line([(xcoord + rx,ycoord + height),(xcoord + width - rx,ycoord + height)], fill = style["stroke"], width = style["stroke-width"], joint = "curve")
-		draw.line([(xcoord + rx,ycoord),(xcoord - rx + width,ycoord)], fill = style["stroke"], width = style["stroke-width"], joint = "curve")
-		
-		draw.line([(xcoord,ycoord + ry),(xcoord,ycoord + height - ry)], fill = style["stroke"], width = style["stroke-width"], joint = "curve")
-		draw.line([(xcoord + width,ycoord + ry),(xcoord + width,ycoord + height - ry)], fill = style["stroke"], width = style["stroke-width"], joint = "curve")
-		
-		draw.arc([xcoord,ycoord,xcoord + rx * 2 ,ycoord + ry * 2 ], 180, 270, style["stroke"] ,width = style["stroke-width"])
-		draw.arc([xcoord,ycoord + height - 2 * ry,xcoord + rx * 2 ,ycoord + height], 90, 180, style["stroke"] ,width = style["stroke-width"])
-		draw.arc([xcoord + width - rx*2,ycoord + height-ry*2,xcoord + width,ycoord + height], 0, 90, style["stroke"] ,width = style["stroke-width"])
-		draw.arc([xcoord + width - rx*2,ycoord ,xcoord + width,ycoord + ry * 2], 270, 0, style["stroke"] ,width = style["stroke-width"])
+    if rx == ry == 0:
+        draw.line([(xcoord + rx,ycoord),(xcoord + rx,ycoord + height),(xcoord + width - rx,ycoord + height),(xcoord + width - rx ,ycoord),
+            (xcoord + rx,ycoord)], fill = style["stroke"], width = style["stroke-width"], joint = "curve")
+    else:
+        draw.line([(xcoord + rx,ycoord + height),(xcoord + width - rx,ycoord + height)], fill = style["stroke"], width = style["stroke-width"], joint = "curve")
+        draw.line([(xcoord + rx,ycoord),(xcoord - rx + width,ycoord)], fill = style["stroke"], width = style["stroke-width"], joint = "curve")
+        
+        draw.line([(xcoord,ycoord + ry),(xcoord,ycoord + height - ry)], fill = style["stroke"], width = style["stroke-width"], joint = "curve")
+        draw.line([(xcoord + width,ycoord + ry),(xcoord + width,ycoord + height - ry)], fill = style["stroke"], width = style["stroke-width"], joint = "curve")
+        
+        draw.arc([xcoord,ycoord,xcoord + rx * 2 ,ycoord + ry * 2 ], 180, 270, style["stroke"] ,width = style["stroke-width"])
+        draw.arc([xcoord,ycoord + height - 2 * ry,xcoord + rx * 2 ,ycoord + height], 90, 180, style["stroke"] ,width = style["stroke-width"])
+        draw.arc([xcoord + width - rx*2,ycoord + height-ry*2,xcoord + width,ycoord + height], 0, 90, style["stroke"] ,width = style["stroke-width"])
+        draw.arc([xcoord + width - rx*2,ycoord ,xcoord + width,ycoord + ry * 2], 270, 0, style["stroke"] ,width = style["stroke-width"])
 
-	if style["fill"] != None:
-		ImageDraw.floodfill(im, ((xcoord + width)/2 , (ycoord + height)/2), style["fill"])
+    if style["fill"] != None:
+        ImageDraw.floodfill(im, ((xcoord + width)/2 , (ycoord + height)/2), style["fill"])
 
-	return
+    return
 
 def draw_circle(draw, cx = 0 , cy = 0, r = 0, style = {"fill" : None, "stroke" : "Black", "stroke-width" : 1}):
 
-	if "fill" not in style.keys():
-		style["fill"] = None
-	
-	if "stroke" not in style.keys():
-		style["stroke"] = "Black"
+    if "fill" not in style.keys():
+        style["fill"] = None
+    
+    if "stroke" not in style.keys():
+        style["stroke"] = "Black"
 
-	if "stroke-width" not in style.keys():
-		style["stroke-width"] = 1
+    if "stroke-width" not in style.keys():
+        style["stroke-width"] = 1
 
-	draw.arc([cx - r,cy - r,cx + r, cy + r], 0, 360, style["stroke"] ,width = style["stroke-width"])
-	
-	if style["fill"] != None:
-		ImageDraw.floodfill(im, (cx, cy), style["fill"])
+    draw.arc([cx - r,cy - r,cx + r, cy + r], 0, 360, style["stroke"] ,width = style["stroke-width"])
+    
+    if style["fill"] != None:
+        ImageDraw.floodfill(im, (cx, cy), style["fill"])
 
-	return 
+    return 
 
 def draw_ellipse(draw, cx = 0 , cy = 0, rx = 0, ry = 0, style = {"fill" : None, "stroke" : "Black", "stroke-width" : 1}):
 
-	if "fill" not in style.keys():
-		style["fill"] = None
-	
-	if "stroke" not in style.keys():
-		style["stroke"] = "Black"
+    if "fill" not in style.keys():
+        style["fill"] = None
+    
+    if "stroke" not in style.keys():
+        style["stroke"] = "Black"
 
-	if "stroke-width" not in style.keys():
-		style["stroke-width"] = 1
+    if "stroke-width" not in style.keys():
+        style["stroke-width"] = 1
 
-	draw.arc([cx - rx,cy - ry,cx + rx, cy + ry], 0, 360, style["stroke"] ,width = style["stroke-width"])
-	
-	if style["fill"] != None:
-		ImageDraw.floodfill(im, (cx, cy), style["fill"])
+    draw.arc([cx - rx,cy - ry,cx + rx, cy + ry], 0, 360, style["stroke"] ,width = style["stroke-width"])
+    
+    if style["fill"] != None:
+        ImageDraw.floodfill(im, (cx, cy), style["fill"])
 
-	return 
+    return 
 
 def draw_line(draw, x1 = 0, x2 = 0, y1 = 0, y2 = 0, style = {"fill" : None, "stroke" : "Black", "stroke-width" : 1}):
 
-	if "fill" not in style.keys():
-		style["fill"] = None
-	
-	if "stroke" not in style.keys():
-		style["stroke"] = "Black"
+    if "fill" not in style.keys():
+        style["fill"] = None
+    
+    if "stroke" not in style.keys():
+        style["stroke"] = "Black"
 
-	if "stroke-width" not in style.keys():
-		style["stroke-width"] = 1
+    if "stroke-width" not in style.keys():
+        style["stroke-width"] = 1
 
-	draw.line([(x1,y1),(x2,y2)], fill = style["stroke"], width = style["stroke-width"], joint = "curve")
+    draw.line([(x1,y1),(x2,y2)], fill = style["stroke"], width = style["stroke-width"], joint = "curve")
 
-	return 
+    return 
 
 def draw_polyline(draw, points = [(0,0)], style = {"fill" : None, "stroke" : "Black", "stroke-width" : 1}):
 
-	if "fill" not in style.keys():
-		style["fill"] = None
-	
-	if "stroke" not in style.keys():
-		style["stroke"] = "Black"
+    if "fill" not in style.keys():
+        style["fill"] = None
+    
+    if "stroke" not in style.keys():
+        style["stroke"] = "Black"
 
-	if "stroke-width" not in style.keys():
-		style["stroke-width"] = 1
-	
-	if style["fill"] != None:
-		points.append(points[0])
-		draw.line(points, fill = style["stroke"], width = style["stroke-width"], joint = "curve")
+    if "stroke-width" not in style.keys():
+        style["stroke-width"] = 1
+    
+    if style["fill"] != None:
+        points.append(points[0])
+        draw.line(points, fill = style["stroke"], width = style["stroke-width"], joint = "curve")
 
-		noPint = True
-		for i in range(len(points) - 2):
-			for j in range(i,len(points) - 1):
-				
-				L1 = line(points[i],points[i+1])
-				L2 = line(points[j],points[j+1])
+        noPint = True
+        for i in range(len(points) - 2):
+            for j in range(i,len(points) - 1):
+                
+                L1 = line(points[i],points[i+1])
+                L2 = line(points[j],points[j+1])
 
-				pint = intersection(L1,L2)
-				if pint:
-					x1, x2, x3 = points[i][0], points[i + 1][0], pint[0]
-					y1, y2, y3 = points[i][1], points[i + 1][1], pint[1]
+                pint = intersection(L1,L2)
+                if pint:
+                    x1, x2, x3 = points[i][0], points[i + 1][0], pint[0]
+                    y1, y2, y3 = points[i][1], points[i + 1][1], pint[1]
 
-					onSeg = (min(x1, x2) <= x3 <= max(x1, x2)) and (min(y1, y2) <= y3 <= max(y1, y2))
-					pint = (int(pint[0]),int(pint[1]))
+                    onSeg = (min(x1, x2) <= x3 <= max(x1, x2)) and (min(y1, y2) <= y3 <= max(y1, y2))
+                    pint = (int(pint[0]),int(pint[1]))
 
-					if onSeg and pint not in points:
+                    if onSeg and pint not in points:
 
-						noPint = False
-						ImageDraw.floodfill(im,((((((points[i+1][0] + points[j][0]) / 2 + pint[0]) /2) + pint[0])/2) + style["stroke-width"] /2 , 
-							(((((points[i+1][1] + points[j][1]) / 2 + pint[1]) /2) + pint[1])/2)  + style["stroke-width"] / 2), style["fill"])
-						ImageDraw.floodfill(im,((((((points[i][0] + points[j+1][0]) / 2 + pint[0]) /2) + pint[0])/2) - style["stroke-width"] / 2, 
-							(((((points[i][1] + points[j+1][1]) / 2 + pint[1]) /2) + pint[1])/2) - style["stroke-width"] / 2), style["fill"])
+                        noPint = False
+                        ImageDraw.floodfill(im,((((((points[i+1][0] + points[j][0]) / 2 + pint[0]) /2) + pint[0])/2) + style["stroke-width"] /2 , 
+                            (((((points[i+1][1] + points[j][1]) / 2 + pint[1]) /2) + pint[1])/2)  + style["stroke-width"] / 2), style["fill"])
+                        ImageDraw.floodfill(im,((((((points[i][0] + points[j+1][0]) / 2 + pint[0]) /2) + pint[0])/2) - style["stroke-width"] / 2, 
+                            (((((points[i][1] + points[j+1][1]) / 2 + pint[1]) /2) + pint[1])/2) - style["stroke-width"] / 2), style["fill"])
 
-		if noPint:
+        if noPint:
 
-			ImageDraw.floodfill(im,(((((((points[1][0] + points[len(points) - 2][0]) / 2 + points[0][0]) /2) + points[0][0])/2) + points[0][0])/2 , 
-							((((((points[1][1] + points[len(points) - 2][1]) / 2 + points[0][1]) /2) + points[0][1])/2) + points[0][1])/2), style["fill"])
+            ImageDraw.floodfill(im,(((((((points[1][0] + points[len(points) - 2][0]) / 2 + points[0][0]) /2) + points[0][0])/2) + points[0][0])/2 , 
+                            ((((((points[1][1] + points[len(points) - 2][1]) / 2 + points[0][1]) /2) + points[0][1])/2) + points[0][1])/2), style["fill"])
 
 
-	else:
-		draw.line(points, fill = style["stroke"], width = style["stroke-width"], joint = "curve")
+    else:
+        draw.line(points, fill = style["stroke"], width = style["stroke-width"], joint = "curve")
 
-	return
+    return
 
 def draw_path(draw, descr = None, style = {"fill" : None, "stroke" : "Black", "stroke-width" : 1}):
 
-	if "fill" not in style.keys():
-		style["fill"] = None
-	
-	if "stroke" not in style.keys():
-		style["stroke"] = "Black"
+    if "fill" not in style.keys():
+        style["fill"] = None
+    
+    if "stroke" not in style.keys():
+        style["stroke"] = "Black"
 
-	if "stroke-width" not in style.keys():
-		style["stroke-width"] = 1
+    if "stroke-width" not in style.keys():
+        style["stroke-width"] = 1
 
-	startPoint = None
-	startPointQuad = None
-	lastCmd = None
-	lastCmdQuad = None
-	initialPoint = None
+    startPoint = None
+    startPointQuad = None
+    lastCmd = None
+    lastCmdQuad = None
+    initialPoint = None
 
-	if descr != None:
-		for cmd in descr:
-			if cmd[0] == "M":
-				startPoint = cmd[1]
-				lastCmd = None
-				lastCmdQuad = None
+    if descr != None:
+        for cmd in descr:
+            if cmd[0] == "M":
+                startPoint = cmd[1]
+                lastCmd = None
+                lastCmdQuad = None
 
-				if initialPoint == None:
-					initialPoint = cmd[1]
+                if initialPoint == None:
+                    initialPoint = cmd[1]
 
-				continue
-			if cmd[0] == "m":
-				startPoint = (startPoint[0] + cmd[1][0],startPoint[1] + cmd[1][1])
-				lastCmd = None
-				lastCmdQuad = None
+                continue
+            if cmd[0] == "m":
+                startPoint = (startPoint[0] + cmd[1][0],startPoint[1] + cmd[1][1])
+                lastCmd = None
+                lastCmdQuad = None
 
-				continue
-			if cmd[0] == "L":
-				draw.line([startPoint,cmd[1]], fill = style["stroke"], width = style["stroke-width"], joint = "curve")
-				startPoint = cmd[1]
-				lastCmd = None
-				lastCmdQuad = None
+                continue
+            if cmd[0] == "L":
+                draw.line([startPoint,cmd[1]], fill = style["stroke"], width = style["stroke-width"], joint = "curve")
+                startPoint = cmd[1]
+                lastCmd = None
+                lastCmdQuad = None
 
-				continue
-			if cmd[0] == "l":
-				draw.line([startPoint,(startPoint[0] + cmd[1][0],startPoint[1] + cmd[1][1])], fill = style["stroke"], width = style["stroke-width"], joint = "curve")
-				startPoint = (startPoint[0] + cmd[1][0],startPoint[1] + cmd[1][1])
-				lastCmdQuad = None
-				lastCmd = None
-				continue
-			if cmd[0] == "H":
-				draw.line([startPoint,(cmd[1],startPoint[1])], fill = style["stroke"], width = style["stroke-width"], joint = "curve")
-				startPoint = (cmd[1],startPoint[1])
-				lastCmdQuad = None
-				lastCmd = None
-				continue
-			if cmd[0] == "h":
-				draw.line([startPoint,(startPoint[0] + cmd[1],startPoint[1])], fill = style["stroke"], width = style["stroke-width"], joint = "curve")
-				startPoint = (startPoint[0] + cmd[1], startPoint[1])
-				lastCmdQuad = None
-				lastCmd = None
-				continue
-			if cmd[0] == "V":
-				draw.line([startPoint,(startPoint[0],cmd[1])], fill = style["stroke"], width = style["stroke-width"], joint = "curve")
-				startPoint = (startPoint[0],cmd[1])
-				lastCmdQuad = None
-				lastCmd = None
-				continue
-			if cmd[0] == "v":
-				draw.line([startPoint,(startPoint[0],startPoint[1] + cmd[1])], fill = style["stroke"], width = style["stroke-width"], joint = "curve")
-				startPoint = (startPoint,startPoint[1] + cmd[1])
-				lastCmdQuad = None
-				lastCmd = None
-				continue
-			if cmd[0] == "C":
-				numSteps = 1000
-				coorArrX = [startPoint[0],cmd[1][0][0],cmd[1][1][0],cmd[1][2][0]]
-				coorArrY = [startPoint[1],cmd[1][0][1],cmd[1][1][1],cmd[1][2][1]]
-				
-				for k in range(numSteps):
-					t = float(k) / (numSteps - 1)
-					x = int(getLocation(coorArrX, 0, 3, t))
-					y = int(getLocation(coorArrY, 0, 3, t))
-					im.putpixel((x, y), style["stroke"])
-				lastCmd = (2 * cmd[1][2][0] - cmd[1][1][0],2 * cmd[1][2][1] - cmd[1][1][1])
-				startPoint = (cmd[1][2][0],cmd[1][2][1])
-				lastCmdQuad = None
+                continue
+            if cmd[0] == "l":
+                draw.line([startPoint,(startPoint[0] + cmd[1][0],startPoint[1] + cmd[1][1])], fill = style["stroke"], width = style["stroke-width"], joint = "curve")
+                startPoint = (startPoint[0] + cmd[1][0],startPoint[1] + cmd[1][1])
+                lastCmdQuad = None
+                lastCmd = None
+                continue
+            if cmd[0] == "H":
+                draw.line([startPoint,(cmd[1],startPoint[1])], fill = style["stroke"], width = style["stroke-width"], joint = "curve")
+                startPoint = (cmd[1],startPoint[1])
+                lastCmdQuad = None
+                lastCmd = None
+                continue
+            if cmd[0] == "h":
+                draw.line([startPoint,(startPoint[0] + cmd[1],startPoint[1])], fill = style["stroke"], width = style["stroke-width"], joint = "curve")
+                startPoint = (startPoint[0] + cmd[1], startPoint[1])
+                lastCmdQuad = None
+                lastCmd = None
+                continue
+            if cmd[0] == "V":
+                draw.line([startPoint,(startPoint[0],cmd[1])], fill = style["stroke"], width = style["stroke-width"], joint = "curve")
+                startPoint = (startPoint[0],cmd[1])
+                lastCmdQuad = None
+                lastCmd = None
+                continue
+            if cmd[0] == "v":
+                draw.line([startPoint,(startPoint[0],startPoint[1] + cmd[1])], fill = style["stroke"], width = style["stroke-width"], joint = "curve")
+                startPoint = (startPoint,startPoint[1] + cmd[1])
+                lastCmdQuad = None
+                lastCmd = None
+                continue
+            if cmd[0] == "C":
+                numSteps = 1000
+                coorArrX = [startPoint[0],cmd[1][0][0],cmd[1][1][0],cmd[1][2][0]]
+                coorArrY = [startPoint[1],cmd[1][0][1],cmd[1][1][1],cmd[1][2][1]]
+                
+                for k in range(numSteps):
+                    t = float(k) / (numSteps - 1)
+                    x = int(getLocation(coorArrX, 0, 3, t))
+                    y = int(getLocation(coorArrY, 0, 3, t))
+                    im.putpixel((x, y), style["stroke"])
+                lastCmd = (2 * cmd[1][2][0] - cmd[1][1][0],2 * cmd[1][2][1] - cmd[1][1][1])
+                startPoint = (cmd[1][2][0],cmd[1][2][1])
+                lastCmdQuad = None
 
-				continue
-			if cmd[0] == "c":
-				numSteps = 1000
-				coorArrX = [startPoint[0],startPoint[0] + cmd[1][0][0],startPoint[0] + cmd[1][1][0],startPoint[0] + cmd[1][2][0]]
-				coorArrY = [startPoint[1],startPoint[1] + cmd[1][0][1],startPoint[1] + cmd[1][1][1],startPoint[1] + cmd[1][2][1]]
-				
-				for k in range(numSteps):
-					t = float(k) / (numSteps - 1)
-					x = int(getLocation(coorArrX, 0, 3, t))
-					y = int(getLocation(coorArrY, 0, 3, t))
-					im.putpixel((x, y), style["stroke"])
-				
-				lastCmd = (2 * (startPoint[0] + cmd[1][2][0]) - startPoint[0] - cmd[1][1][0] ,
-					2 * (startPoint[1] + cmd[1][2][1]) - startPoint[1] - cmd[1][1][1])
-				startPoint = (startPoint[0] + cmd[1][2][0],startPoint[1] + cmd[1][2][1])
-				lastCmdQuad = None
+                continue
+            if cmd[0] == "c":
+                numSteps = 1000
+                coorArrX = [startPoint[0],startPoint[0] + cmd[1][0][0],startPoint[0] + cmd[1][1][0],startPoint[0] + cmd[1][2][0]]
+                coorArrY = [startPoint[1],startPoint[1] + cmd[1][0][1],startPoint[1] + cmd[1][1][1],startPoint[1] + cmd[1][2][1]]
+                
+                for k in range(numSteps):
+                    t = float(k) / (numSteps - 1)
+                    x = int(getLocation(coorArrX, 0, 3, t))
+                    y = int(getLocation(coorArrY, 0, 3, t))
+                    im.putpixel((x, y), style["stroke"])
+                
+                lastCmd = (2 * (startPoint[0] + cmd[1][2][0]) - startPoint[0] - cmd[1][1][0] ,
+                    2 * (startPoint[1] + cmd[1][2][1]) - startPoint[1] - cmd[1][1][1])
+                startPoint = (startPoint[0] + cmd[1][2][0],startPoint[1] + cmd[1][2][1])
+                lastCmdQuad = None
 
-				continue
-			if cmd[0] == "S":
-				numSteps = 1000
-				if lastCmd != None:
-					coorArrX = [startPoint[0],lastCmd[0],cmd[1][0][0],cmd[1][1][0]]
-					coorArrY = [startPoint[1],lastCmd[1],cmd[1][0][1],cmd[1][1][1]]
-				else:
-					coorArrX = [startPoint[0],startPoint[0],cmd[1][0][0],cmd[1][1][0]]
-					coorArrY = [startPoint[1],startPoint[1],cmd[1][0][1],cmd[1][1][1]]
+                continue
+            if cmd[0] == "S":
+                numSteps = 1000
+                if lastCmd != None:
+                    coorArrX = [startPoint[0],lastCmd[0],cmd[1][0][0],cmd[1][1][0]]
+                    coorArrY = [startPoint[1],lastCmd[1],cmd[1][0][1],cmd[1][1][1]]
+                else:
+                    coorArrX = [startPoint[0],startPoint[0],cmd[1][0][0],cmd[1][1][0]]
+                    coorArrY = [startPoint[1],startPoint[1],cmd[1][0][1],cmd[1][1][1]]
 
-				for k in range(numSteps):
-					t = float(k) / (numSteps - 1)
-					x = int(getLocation(coorArrX, 0, 3, t))
-					y = int(getLocation(coorArrY, 0, 3, t))
-					im.putpixel((x, y), style["stroke"])
+                for k in range(numSteps):
+                    t = float(k) / (numSteps - 1)
+                    x = int(getLocation(coorArrX, 0, 3, t))
+                    y = int(getLocation(coorArrY, 0, 3, t))
+                    im.putpixel((x, y), style["stroke"])
 
-				lastCmd = (2 * cmd[1][1][0] - cmd[1][0][0],2 * cmd[1][1][1] - cmd[1][0][1])
-				startPoint = (cmd[1][1][0],cmd[1][1][1])
-				lastCmdQuad = None
+                lastCmd = (2 * cmd[1][1][0] - cmd[1][0][0],2 * cmd[1][1][1] - cmd[1][0][1])
+                startPoint = (cmd[1][1][0],cmd[1][1][1])
+                lastCmdQuad = None
 
-				continue
-			if cmd[0] == "s":
-				numSteps = 1000
-				if lastCmd != None:
-					coorArrX = [startPoint[0],lastCmd[0],startPoint[0] + cmd[1][0][0],startPoint[0] + cmd[1][1][0]]
-					coorArrY = [startPoint[1],lastCmd[1],startPoint[1] + cmd[1][0][1],startPoint[1] + cmd[1][1][1]]
-				else:
-					coorArrX = [startPoint[0],startPoint[0],startPoint[0] +cmd[1][0][0],startPoint[0] +cmd[1][1][0]]
-					coorArrY = [startPoint[1],startPoint[1],startPoint[1] +cmd[1][0][1],startPoint[1] +startPoint[1] +cmd[1][1][1]]
-				
-				for k in range(numSteps):
-					t = float(k) / (numSteps - 1)
-					x = int(getLocation(coorArrX, 0, 3, t))
-					y = int(getLocation(coorArrY, 0, 3, t))
-					im.putpixel((x, y), style["stroke"])
+                continue
+            if cmd[0] == "s":
+                numSteps = 1000
+                if lastCmd != None:
+                    coorArrX = [startPoint[0],lastCmd[0],startPoint[0] + cmd[1][0][0],startPoint[0] + cmd[1][1][0]]
+                    coorArrY = [startPoint[1],lastCmd[1],startPoint[1] + cmd[1][0][1],startPoint[1] + cmd[1][1][1]]
+                else:
+                    coorArrX = [startPoint[0],startPoint[0],startPoint[0] +cmd[1][0][0],startPoint[0] +cmd[1][1][0]]
+                    coorArrY = [startPoint[1],startPoint[1],startPoint[1] +cmd[1][0][1],startPoint[1] +startPoint[1] +cmd[1][1][1]]
+                
+                for k in range(numSteps):
+                    t = float(k) / (numSteps - 1)
+                    x = int(getLocation(coorArrX, 0, 3, t))
+                    y = int(getLocation(coorArrY, 0, 3, t))
+                    im.putpixel((x, y), style["stroke"])
 
-				lastCmd = (2 * (startPoint[0] + cmd[1][1][0]) - startPoint[0] + cmd[1][0][0] ,
-					2 * (startPoint[1] + cmd[1][1][1]) - startPoint[1] + cmd[1][0][1])
-				startPoint = (startPoint[0] + cmd[1][1][0],startPoint[1] + cmd[1][1][1])
-				lastCmdQuad = None
-				
-				continue
-			if cmd[0] == "Q":
-				P = lambda t: (1 - t)**2 * np.array([startPoint[0],startPoint[1]]) + 2 * t * (1 - t) * np.array([cmd[1][0][0],
-					cmd[1][0][1]]) + t**2 * np.array([cmd[1][1][0],cmd[1][1][1]])
-				points = np.array([P(t) for t in np.linspace(0, 1, 1000)])
-				for point in points:
-					im.putpixel((int(point[0]),int(point[1])), style["stroke"])
+                lastCmd = (2 * (startPoint[0] + cmd[1][1][0]) - startPoint[0] + cmd[1][0][0] ,
+                    2 * (startPoint[1] + cmd[1][1][1]) - startPoint[1] + cmd[1][0][1])
+                startPoint = (startPoint[0] + cmd[1][1][0],startPoint[1] + cmd[1][1][1])
+                lastCmdQuad = None
+                
+                continue
+            if cmd[0] == "Q":
+                P = lambda t: (1 - t)**2 * np.array([startPoint[0],startPoint[1]]) + 2 * t * (1 - t) * np.array([cmd[1][0][0],
+                    cmd[1][0][1]]) + t**2 * np.array([cmd[1][1][0],cmd[1][1][1]])
+                points = np.array([P(t) for t in np.linspace(0, 1, 1000)])
+                for point in points:
+                    im.putpixel((int(point[0]),int(point[1])), style["stroke"])
 
-				lastCmd = None
-				startPoint = (cmd[1][1][0],cmd[1][1][1])
-				lastCmdQuad = (2 * cmd[1][1][0] - cmd[1][0][0],2 * cmd[1][1][1] - cmd[1][0][1])
+                lastCmd = None
+                startPoint = (cmd[1][1][0],cmd[1][1][1])
+                lastCmdQuad = (2 * cmd[1][1][0] - cmd[1][0][0],2 * cmd[1][1][1] - cmd[1][0][1])
 
-				continue
+                continue
 
-			if cmd[0] == "q":
-				P = lambda t: (1 - t)**2 * np.array([startPoint[0],startPoint[1]]) + 2 * t * (1 - t) * np.array([startPoint[0] + cmd[1][0][0],
-					startPoint[1] + cmd[1][0][1]]) + t**2 * np.array([startPoint[0] + cmd[1][1][0],startPoint[1] + cmd[1][1][1]])
-				points = np.array([P(t) for t in np.linspace(0, 1, 1000)])
-				for point in points:
-					im.putpixel((int(point[0]),int(point[1])), style["stroke"])
+            if cmd[0] == "q":
+                P = lambda t: (1 - t)**2 * np.array([startPoint[0],startPoint[1]]) + 2 * t * (1 - t) * np.array([startPoint[0] + cmd[1][0][0],
+                    startPoint[1] + cmd[1][0][1]]) + t**2 * np.array([startPoint[0] + cmd[1][1][0],startPoint[1] + cmd[1][1][1]])
+                points = np.array([P(t) for t in np.linspace(0, 1, 1000)])
+                for point in points:
+                    im.putpixel((int(point[0]),int(point[1])), style["stroke"])
 
-				lastCmd = None
-				startPoint = (startPoint[0] + cmd[1][1][0],startPoint[1] + cmd[1][1][1])
-				lastCmdQuad = (2 * (startPoint[0] + cmd[1][1][0]) - cmd[1][0][0] - startPoint[0],
-					2 * (cmd[1][1][1] + startPoint[1]) - cmd[1][0][1] - startPoint[1])
+                lastCmd = None
+                startPoint = (startPoint[0] + cmd[1][1][0],startPoint[1] + cmd[1][1][1])
+                lastCmdQuad = (2 * (startPoint[0] + cmd[1][1][0]) - cmd[1][0][0] - startPoint[0],
+                    2 * (cmd[1][1][1] + startPoint[1]) - cmd[1][0][1] - startPoint[1])
 
-				continue
+                continue
 
-			if cmd[0] == "T":
-				nextPoint = None
-				if lastCmdQuad != None:
-					P = lambda t: (1 - t)**2 * np.array([startPoint[0],startPoint[1]]) + 2 * t * (1 - t) * np.array([lastCmdQuad[0],
-						lastCmdQuad[1]]) + t**2 * np.array([cmd[1][0][0],cmd[1][0][1]])
-					nextPoint = [lastCmdQuad[0],lastCmdQuad[1]]
-				else:
-					P = lambda t: (1 - t)**2 * np.array([startPoint[0],startPoint[1]]) + 2 * t * (1 - t) * np.array([startPoint[0],
-						startPoint[1]]) + t**2 * np.array([cmd[1][0][0],cmd[1][0][1]])
-					nextPoint = [startPoint[0],startPoint[1]]
-				
-				points = np.array([P(t) for t in np.linspace(0, 1, 1000)])
-				for point in points:
-					im.putpixel((int(point[0]),int(point[1])), style["stroke"])
+            if cmd[0] == "T":
+                nextPoint = None
+                if lastCmdQuad != None:
+                    P = lambda t: (1 - t)**2 * np.array([startPoint[0],startPoint[1]]) + 2 * t * (1 - t) * np.array([lastCmdQuad[0],
+                        lastCmdQuad[1]]) + t**2 * np.array([cmd[1][0][0],cmd[1][0][1]])
+                    nextPoint = [lastCmdQuad[0],lastCmdQuad[1]]
+                else:
+                    P = lambda t: (1 - t)**2 * np.array([startPoint[0],startPoint[1]]) + 2 * t * (1 - t) * np.array([startPoint[0],
+                        startPoint[1]]) + t**2 * np.array([cmd[1][0][0],cmd[1][0][1]])
+                    nextPoint = [startPoint[0],startPoint[1]]
+                
+                points = np.array([P(t) for t in np.linspace(0, 1, 1000)])
+                for point in points:
+                    im.putpixel((int(point[0]),int(point[1])), style["stroke"])
 
-				lastCmd = None
-				startPoint = (cmd[1][0][0],cmd[1][0][1])
-				lastCmdQuad = (2 * cmd[1][0][0] - nextPoint[0],2 * cmd[1][0][1] - nextPoint[1])
+                lastCmd = None
+                startPoint = (cmd[1][0][0],cmd[1][0][1])
+                lastCmdQuad = (2 * cmd[1][0][0] - nextPoint[0],2 * cmd[1][0][1] - nextPoint[1])
 
-				continue
+                continue
 
-			if cmd[0] == "t":
-				nextPoint = None
-				if lastCmdQuad != None:
-					P = lambda t: (1 - t)**2 * np.array([startPoint[0],startPoint[1]]) + 2 * t * (1 - t) * np.array([lastCmdQuad[0],
-						lastCmdQuad[1]]) + t**2 * np.array([startPoint[0] + cmd[1][0][0], startPoint[1] + cmd[1][0][1]])
-					nextPoint = [lastCmdQuad[0],lastCmdQuad[1]]
-				else:
-					P = lambda t: (1 - t)**2 * np.array([startPoint[0],startPoint[1]]) + 2 * t * (1 - t) * np.array([startPoint[0],
-						startPoint[1]]) + t**2 * np.array([startPoint[0] + cmd[1][0][0],startPoint[1] + cmd[1][0][1]])
-					nextPoint = [startPoint[0],startPoint[1]]
-					
-				points = np.array([P(t) for t in np.linspace(0, 1, 1000)])
-				for point in points:
-					im.putpixel((int(point[0]),int(point[1])), style["stroke"])
+            if cmd[0] == "t":
+                nextPoint = None
+                if lastCmdQuad != None:
+                    P = lambda t: (1 - t)**2 * np.array([startPoint[0],startPoint[1]]) + 2 * t * (1 - t) * np.array([lastCmdQuad[0],
+                        lastCmdQuad[1]]) + t**2 * np.array([startPoint[0] + cmd[1][0][0], startPoint[1] + cmd[1][0][1]])
+                    nextPoint = [lastCmdQuad[0],lastCmdQuad[1]]
+                else:
+                    P = lambda t: (1 - t)**2 * np.array([startPoint[0],startPoint[1]]) + 2 * t * (1 - t) * np.array([startPoint[0],
+                        startPoint[1]]) + t**2 * np.array([startPoint[0] + cmd[1][0][0],startPoint[1] + cmd[1][0][1]])
+                    nextPoint = [startPoint[0],startPoint[1]]
+                    
+                points = np.array([P(t) for t in np.linspace(0, 1, 1000)])
+                for point in points:
+                    im.putpixel((int(point[0]),int(point[1])), style["stroke"])
 
-				lastCmd = None
-				startPoint = (startPoint[0] + cmd[1][0][0],startPoint[1] + cmd[1][0][1])
-				lastCmdQuad = (2 * startPoint[0] - nextPoint[0],2 * startPoint[1]  - nextPoint[1])
-				continue
+                lastCmd = None
+                startPoint = (startPoint[0] + cmd[1][0][0],startPoint[1] + cmd[1][0][1])
+                lastCmdQuad = (2 * startPoint[0] - nextPoint[0],2 * startPoint[1]  - nextPoint[1])
+                continue
 
-			if cmd[0] == "A":
-				cx,cy,p1,p2 = get_center(startPoint[0], startPoint[1],cmd[1][5][0],cmd[1][5][1],cmd[1][3],cmd[1][4],cmd[1][0],cmd[1][1],cmd[1][2])
+            if cmd[0] == "A":
+                cx,cy,p1,p2 = get_center(startPoint[0], startPoint[1],cmd[1][5][0],cmd[1][5][1],cmd[1][3],cmd[1][4],cmd[1][0],cmd[1][1],cmd[1][2])
 
-				im2 = Image.new('RGBA', (int(cx) + 2 * cmd[1][0], int(cy) + 2 * cmd[1][1]))
-				draw2 = ImageDraw.Draw(im2)
-				
-				if (cmd[1][3] == 1 and cmd[1][4] == 1) or (cmd[1][3] == 0 and cmd[1][4] == 1):
-					draw2.arc([cx-cmd[1][0],cy-cmd[1][1],cx+cmd[1][0],cy+cmd[1][1]],p2 + cmd[1][2],p1+ cmd[1][2] ,style["stroke"],width = style["stroke-width"])
-				else:
-					draw2.arc([cx-cmd[1][0],cy-cmd[1][1],cx+cmd[1][0],cy+cmd[1][1]],p1 + cmd[1][2] ,p2 + cmd[1][2] ,style["stroke"],width = style["stroke-width"])
-				im_new = im2.rotate(cmd[1][2])
-				im_flip = ImageOps.flip(im_new)
-				if cmd[1][3] == cmd[1][4]:
-					offset = (0, 0)
-				else:
-					offset = (0, cmd[1][1])
+                im2 = Image.new('RGBA', (int(cx) + 2 * cmd[1][0], int(cy) + 2 * cmd[1][1]))
+                draw2 = ImageDraw.Draw(im2)
+                
+                if (cmd[1][3] == 1 and cmd[1][4] == 1) or (cmd[1][3] == 0 and cmd[1][4] == 1):
+                    draw2.arc([cx-cmd[1][0],cy-cmd[1][1],cx+cmd[1][0],cy+cmd[1][1]],p2 + cmd[1][2],p1+ cmd[1][2] ,style["stroke"],width = style["stroke-width"])
+                else:
+                    draw2.arc([cx-cmd[1][0],cy-cmd[1][1],cx+cmd[1][0],cy+cmd[1][1]],p1 + cmd[1][2] ,p2 + cmd[1][2] ,style["stroke"],width = style["stroke-width"])
+                im_new = im2.rotate(cmd[1][2])
+                im_flip = ImageOps.flip(im_new)
+                if cmd[1][3] == cmd[1][4]:
+                    offset = (0, 0)
+                else:
+                    offset = (0, cmd[1][1])
 
-				im.paste(im_flip,offset,mask=im_flip)
+                im.paste(im_flip,offset,mask=im_flip)
 
-				startPoint = cmd[1][5]
-				continue
+                startPoint = cmd[1][5]
+                continue
 
-			if cmd[0] == "a":
-				cx,cy,p1,p2 = get_center(startPoint[0], startPoint[1],cmd[1][5][0] + startPoint[0],cmd[1][5][1] + startPoint[1],cmd[1][3],cmd[1][4],cmd[1][0],cmd[1][1],cmd[1][2])
+            if cmd[0] == "a":
+                cx,cy,p1,p2 = get_center(startPoint[0], startPoint[1],cmd[1][5][0] + startPoint[0],cmd[1][5][1] + startPoint[1],cmd[1][3],cmd[1][4],cmd[1][0],cmd[1][1],cmd[1][2])
 
-				im2 = Image.new('RGBA', (int(cx) + 2 * cmd[1][0], int(cy) + 2 * cmd[1][1]))
-				draw2 = ImageDraw.Draw(im2)
-				
-				if (cmd[1][3] == 1 and cmd[1][4] == 1) or (cmd[1][3] == 0 and cmd[1][4] == 1):
-					draw2.arc([cx-cmd[1][0],cy-cmd[1][1],cx+cmd[1][0],cy+cmd[1][1]],p2 + cmd[1][2],p1+ cmd[1][2] ,style["stroke"],width = style["stroke-width"])
-				else:
-					draw2.arc([cx-cmd[1][0],cy-cmd[1][1],cx+cmd[1][0],cy+cmd[1][1]],p1 + cmd[1][2] ,p2 + cmd[1][2] ,style["stroke"],width = style["stroke-width"])
-				im_new = im2.rotate(cmd[1][2])
-				im_flip = ImageOps.flip(im_new)
-				if cmd[1][3] == cmd[1][4]:
-					offset = (0, 0)
-				else:
-					offset = (0, cmd[1][1])
+                im2 = Image.new('RGBA', (int(cx) + 2 * cmd[1][0], int(cy) + 2 * cmd[1][1]))
+                draw2 = ImageDraw.Draw(im2)
+                
+                if (cmd[1][3] == 1 and cmd[1][4] == 1) or (cmd[1][3] == 0 and cmd[1][4] == 1):
+                    draw2.arc([cx-cmd[1][0],cy-cmd[1][1],cx+cmd[1][0],cy+cmd[1][1]],p2 + cmd[1][2],p1+ cmd[1][2] ,style["stroke"],width = style["stroke-width"])
+                else:
+                    draw2.arc([cx-cmd[1][0],cy-cmd[1][1],cx+cmd[1][0],cy+cmd[1][1]],p1 + cmd[1][2] ,p2 + cmd[1][2] ,style["stroke"],width = style["stroke-width"])
+                im_new = im2.rotate(cmd[1][2])
+                im_flip = ImageOps.flip(im_new)
+                if cmd[1][3] == cmd[1][4]:
+                    offset = (0, 0)
+                else:
+                    offset = (0, cmd[1][1])
 
-				im.paste(im_flip,offset,mask=im_flip)
+                im.paste(im_flip,offset,mask=im_flip)
 
-				startPoint = (cmd[1][5][0] + startPoint[0],cmd[1][5][1] + startPoint[1])
-				continue 
+                startPoint = (cmd[1][5][0] + startPoint[0],cmd[1][5][1] + startPoint[1])
+                continue 
 
-			if cmd[0].lower() == "z":
-				draw_line(draw,initialPoint[0],startPoint[0],initialPoint[1],startPoint[1],style = style)
-				startPoint = None
-				initialPoint = None
-				continue 
-				
+            if cmd[0].lower() == "z":
+                draw_line(draw,initialPoint[0],startPoint[0],initialPoint[1],startPoint[1],style = style)
+                startPoint = None
+                initialPoint = None
+                continue 
+                
 
 
 
