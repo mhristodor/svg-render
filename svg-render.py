@@ -7,9 +7,8 @@ import numpy as np
 import math
 import io
 
-im = None
-
 def getAngle(cx,cy,x,y):
+    
     angle = math.atan2(cx-x, cy-y) * (180/math.pi) + 90
     if angle < 0:
         angle += 360
@@ -17,15 +16,7 @@ def getAngle(cx,cy,x,y):
     return angle
 
 def vectorAngle (ux,uy,vx,vy):
-    # vector_1 = [ux,uy]
-    # vector_2 = [vx,vy]
-
-    # unit_vector_1 = vector_1 / np.linalg.norm(vector_1)
-    # unit_vector_2 = vector_2 / np.linalg.norm(vector_2)
-    # dot_product = np.dot(unit_vector_1, unit_vector_2)
     
-    # print(np.arccos(dot_product))
-
     sign = None 
     if ux * vy - uy * vx < 0:
         sign = -1
@@ -35,8 +26,6 @@ def vectorAngle (ux,uy,vx,vy):
     ua = math.sqrt(ux*ux + uy * uy)
     va = math.sqrt(vx * vx + vy * vy)
     dot = ux * vx + uy * vy
-
-    # print(sign * math.acos(dot / (ua * va)))
 
     return sign * math.acos(dot / (ua * va))
 
@@ -85,13 +74,6 @@ def get_center(x1,y1,x2,y2,fa,fs,rx,ry,phi):
         _dTheta -= 360
     elif fs == 1 and _dTheta < 0:
         _dTheta += 360
-
-    # if fa == 0 and theta > 0:
-    #     theta -= 360
-    # elif fa == 1 and theta < 0:
-    #     theta += 360
-
-    # return cx,cy,theta,math.degrees(math.radians(_dTheta))
     return cx, cy, getAngle(cx,cy,x1,y1), getAngle(cx,cy,x2,y2)
 
 
@@ -119,22 +101,13 @@ def getLocation(coorArr, i, j, t):
 
 def draw_rect(im,draw, xcoord = 0, ycoord = 0, width = 0, height = 0, rx = 0, ry = 0, style = {"fill" : None, "stroke" : "Black", "stroke-width" : 1}):
 
-
-    if "fill" not in style.keys():
-        style["fill"] = None
-    
-    if "stroke" not in style.keys():
-        style["stroke"] = "Black"
-
-    if "stroke-width" not in style.keys():
-        style["stroke-width"] = 1
+    style = defaultStyle(style)
 
     if rx == 0 and ry != 0:
         rx = ry
 
     if ry == 0 and rx != 0:
         ry = rx
-
 
     if rx == ry == 0:
         draw.line([(xcoord + rx,ycoord),(xcoord + rx,ycoord + height),(xcoord + width - rx,ycoord + height),(xcoord + width - rx ,ycoord),
@@ -152,21 +125,15 @@ def draw_rect(im,draw, xcoord = 0, ycoord = 0, width = 0, height = 0, rx = 0, ry
         draw.arc([xcoord + width - rx*2,ycoord ,xcoord + width,ycoord + ry * 2], 270, 0, style["stroke"] ,width = style["stroke-width"])
 
     if style["fill"] != None:
-        ImageDraw.floodfill(im, ((xcoord + width)/2 , (ycoord + height)/2), style["fill"])
+        ImageDraw.floodfill(im, ((xcoord + width/2) , (ycoord + height/2)), style["fill"])
+    else:
+        ImageDraw.floodfill(im, ((xcoord + width/2) , (ycoord + height/2)), (0,0,0))
 
-    return
+    return im
 
 def draw_circle(im,draw, cx = 0 , cy = 0, r = 0, style = {"fill" : None, "stroke" : "Black", "stroke-width" : 1}):
 
-    if "fill" not in style.keys():
-        style["fill"] = None
-    
-    if "stroke" not in style.keys():
-        style["stroke"] = "Black"
-
-    if "stroke-width" not in style.keys():
-        style["stroke-width"] = 1
-
+    style = defaultStyle(style)
     draw.arc([cx - r,cy - r,cx + r, cy + r], 0, 360, style["stroke"] ,width = style["stroke-width"])
     
     if style["fill"] != None:
@@ -518,8 +485,28 @@ def draw_path(im,draw, descr = None, style = {"fill" : None, "stroke" : "Black",
                 initialPoint = None
                 continue 
 
-def parseSVG(im,draw,root,scale,style = {"fill" : None, "stroke" : "Black", "stroke-width" : 1}):
+def parseStyle(subItem,style):
     
+    style_new = style
+
+    if "stroke" in subItem.attrib:
+        stroke_coll = subItem.attrib["stroke"].strip()
+        stroke_tr = (int(colors.to_rgb(stroke_coll)[0]*255),int(colors.to_rgb(stroke_coll)[1]*255),int(colors.to_rgb(stroke_coll)[2]*255))
+        style_new["stroke"] = stroke_tr
+
+    if "fill" in subItem.attrib:
+        fill_coll = subItem.attrib["fill"].strip()
+        fill_tr = (int(colors.to_rgb(fill_coll)[0]*255),int(colors.to_rgb(fill_coll)[1]*255),int(colors.to_rgb(fill_coll)[2]*255))
+        style_new["fill"] = fill_tr
+    
+    if "stroke-width" in subItem.attrib:
+        stroke_width = int(subItem.attrib["stroke"].strip())
+        style_new["stroke-width"] = stroke_width 
+
+    return style_new
+
+def defaultStyle(style):
+
     if "fill" not in style.keys():
         style["fill"] = None
     
@@ -529,6 +516,12 @@ def parseSVG(im,draw,root,scale,style = {"fill" : None, "stroke" : "Black", "str
     if "stroke-width" not in style.keys():
         style["stroke-width"] = 1
 
+    return style
+
+def parseSVG(im,draw,root,scale,style = {"fill" : None, "stroke" : "Black", "stroke-width" : 1}):
+    
+    style = defaultStyle(style)
+    
     for subItem in root:
         if subItem.tag.endswith("svg"):
             
@@ -560,22 +553,7 @@ def parseSVG(im,draw,root,scale,style = {"fill" : None, "stroke" : "Black", "str
             else:
                 offsetY = 0
 
-            style_new = style
-    
-            if "stroke" in subItem.attrib:
-                stroke_coll = subItem.attrib["stroke"].strip()
-                stroke_tr = (int(colors.to_rgb(stroke_coll)[0]*255),int(colors.to_rgb(stroke_coll)[1]*255),int(colors.to_rgb(stroke_coll)[2]*255))
-                style_new["stroke"] = stroke_tr
-
-            if "fill" in subItem.attrib:
-                fill_coll = subItem.attrib["fill"].strip()
-                fill_tr = (int(colors.to_rgb(fill_coll)[0]*255),int(colors.to_rgb(fill_coll)[1]*255),int(colors.to_rgb(fill_coll)[2]*255))
-                style_new["fill"] = fill_tr
-            
-            if "stroke-width" in subItem.attrib:
-                stroke_width = int(subItem.attrib["stroke"].strip())
-                style_new["stroke-width"] = stroke_width 
-
+            style_new = parseStyle(subItem,style)
             scale_new = (int(tranX/sizeX),int(tranY/sizeY))
             im_new = Image.new('RGB', (sizeX * scale_new[0],sizeY * scale_new[1]),"White")
             draw_new = ImageDraw.Draw(im_new)
@@ -594,7 +572,34 @@ def parseSVG(im,draw,root,scale,style = {"fill" : None, "stroke" : "Black", "str
             if "r" in subItem.attrib:
                 r = int(subItem.attrib["r"].strip())
 
-            im = draw_circle(im,draw,cx*scale[0],cy * scale[1],r*scale[0],style)
+            style_new = parseStyle(subItem,style)
+            style_new["stroke-width"] = style_new["stroke-width"] * scale[0]
+            im = draw_circle(im,draw,cx*scale[0],cy * scale[1],r*scale[0],style_new)
+
+        if "rect" in subItem.tag:
+            x,y,width,height,rx,ry = 0,0,0,0,0,0
+
+            if "x" in subItem.attrib:
+                x = int(subItem.attrib["x"].strip())
+            if "y" in subItem.attrib:
+                y = int(subItem.attrib["y"].strip())
+            if "width" in subItem.attrib:
+                width = int(subItem.attrib["width"].strip())
+            if "height" in subItem.attrib:
+                height = int(subItem.attrib["height"].strip())
+            if "rx" in subItem.attrib:
+                rx = int(subItem.attrib["rx"].strip())
+            if "ry" in subItem.attrib:
+                ry = int(subItem.attrib["ry"].strip())
+
+            style_new = parseStyle(subItem,style)
+            style_new["stroke-width"] = style_new["stroke-width"] * scale[0]
+            im = draw_rect(im,draw,x * scale[0] ,y * scale[1],width * scale[0],height * scale[1],
+                rx * scale[0],ry * scale[1],style_new)
+
+
+
+
 
     return im,draw
 
@@ -614,24 +619,8 @@ def main():
         print("SVG file invalid")
         exit()
 
-    style = {}
-    
-    if "stroke" in root.attrib:
-        stroke_coll = root.attrib["stroke"].strip()
-        stroke_tr = (int(colors.to_rgb(stroke_coll)[0]*255),int(colors.to_rgb(stroke_coll)[1]*255),int(colors.to_rgb(stroke_coll)[2]*255))
-        style["stroke"] = stroke_tr
-
-    if "fill" in root.attrib:
-        fill_coll = root.attrib["fill"].strip()
-        fill_tr = (int(colors.to_rgb(fill_coll)[0]*255),int(colors.to_rgb(fill_coll)[1]*255),int(colors.to_rgb(fill_coll)[2]*255))
-        style["fill"] = fill_tr
-    
-    if "stroke-width" in root.attrib:
-        stroke_width = int(root.attrib["stroke"].strip())
-        style["stroke-width"] = stroke_width 
-    
+    style = parseStyle(root,{})
     draw = ImageDraw.Draw(im)
-
     parseSVG(im,draw,root,(1,1),style)
 
 
