@@ -1,13 +1,13 @@
 import xml.etree.ElementTree as ET
 import pprint, sys
 from PIL import Image, ImageDraw, ImageOps
+import PIL
 from matplotlib import colors
 import numpy as np
 import math
 import io
-import matplotlib.pyplot as plt
-import matplotlib
-import matplotlib.patches as patches
+
+im = None
 
 def getAngle(cx,cy,x,y):
     angle = math.atan2(cx-x, cy-y) * (180/math.pi) + 90
@@ -117,7 +117,7 @@ def getLocation(coorArr, i, j, t):
         return coorArr[i]
     return getLocation(coorArr, i, j - 1, t) * (1 - t) + getLocation(coorArr, i + 1, j - 1, t) * t
 
-def draw_rect(draw, xcoord = 0, ycoord = 0, width = 0, height = 0, rx = 0, ry = 0, style = {"fill" : None, "stroke" : "Black", "stroke-width" : 1}):
+def draw_rect(im,draw, xcoord = 0, ycoord = 0, width = 0, height = 0, rx = 0, ry = 0, style = {"fill" : None, "stroke" : "Black", "stroke-width" : 1}):
 
 
     if "fill" not in style.keys():
@@ -156,7 +156,7 @@ def draw_rect(draw, xcoord = 0, ycoord = 0, width = 0, height = 0, rx = 0, ry = 
 
     return
 
-def draw_circle(draw, cx = 0 , cy = 0, r = 0, style = {"fill" : None, "stroke" : "Black", "stroke-width" : 1}):
+def draw_circle(im,draw, cx = 0 , cy = 0, r = 0, style = {"fill" : None, "stroke" : "Black", "stroke-width" : 1}):
 
     if "fill" not in style.keys():
         style["fill"] = None
@@ -172,9 +172,9 @@ def draw_circle(draw, cx = 0 , cy = 0, r = 0, style = {"fill" : None, "stroke" :
     if style["fill"] != None:
         ImageDraw.floodfill(im, (cx, cy), style["fill"])
 
-    return 
+    return im
 
-def draw_ellipse(draw, cx = 0 , cy = 0, rx = 0, ry = 0, style = {"fill" : None, "stroke" : "Black", "stroke-width" : 1}):
+def draw_ellipse(im,draw, cx = 0 , cy = 0, rx = 0, ry = 0, style = {"fill" : None, "stroke" : "Black", "stroke-width" : 1}):
 
     if "fill" not in style.keys():
         style["fill"] = None
@@ -192,7 +192,7 @@ def draw_ellipse(draw, cx = 0 , cy = 0, rx = 0, ry = 0, style = {"fill" : None, 
 
     return 
 
-def draw_line(draw, x1 = 0, x2 = 0, y1 = 0, y2 = 0, style = {"fill" : None, "stroke" : "Black", "stroke-width" : 1}):
+def draw_line(im,draw, x1 = 0, x2 = 0, y1 = 0, y2 = 0, style = {"fill" : None, "stroke" : "Black", "stroke-width" : 1}):
 
     if "fill" not in style.keys():
         style["fill"] = None
@@ -207,7 +207,7 @@ def draw_line(draw, x1 = 0, x2 = 0, y1 = 0, y2 = 0, style = {"fill" : None, "str
 
     return 
 
-def draw_polyline(draw, points = [(0,0)], style = {"fill" : None, "stroke" : "Black", "stroke-width" : 1}):
+def draw_polyline(im,draw, points = [(0,0)], style = {"fill" : None, "stroke" : "Black", "stroke-width" : 1}):
 
     if "fill" not in style.keys():
         style["fill"] = None
@@ -256,7 +256,7 @@ def draw_polyline(draw, points = [(0,0)], style = {"fill" : None, "stroke" : "Bl
 
     return
 
-def draw_path(draw, descr = None, style = {"fill" : None, "stroke" : "Black", "stroke-width" : 1}):
+def draw_path(im,draw, descr = None, style = {"fill" : None, "stroke" : "Black", "stroke-width" : 1}):
 
     if "fill" not in style.keys():
         style["fill"] = None
@@ -517,23 +517,154 @@ def draw_path(draw, descr = None, style = {"fill" : None, "stroke" : "Black", "s
                 startPoint = None
                 initialPoint = None
                 continue 
-                
+
+def parseSVG(im,draw,root,scale,style = {"fill" : None, "stroke" : "Black", "stroke-width" : 1}):
+    
+    if "fill" not in style.keys():
+        style["fill"] = None
+    
+    if "stroke" not in style.keys():
+        style["stroke"] = "Black"
+
+    if "stroke-width" not in style.keys():
+        style["stroke-width"] = 1
+
+    for subItem in root:
+        if subItem.tag.endswith("svg"):
+            
+            offsetX, offsetY, tranX, tranY,sizeX,sizeY = None,None,None,None,None,None
+
+            if "viewBox" in subItem.attrib:
+                sizeX = int(subItem.attrib["viewBox"].split()[2]) - int(subItem.attrib["viewBox"].split()[0])
+                sizeY = int(subItem.attrib["viewBox"].split()[3]) - int(subItem.attrib["viewBox"].split()[1])
+            else:
+                sizeX,sizeY = im.size
+            
+            if "height" in subItem.attrib:
+                tranY = int(subItem.attrib["height"].strip())
+            else:
+                tranY = im.size[1]
+
+            if "width" in subItem.attrib:
+                tranX = int(subItem.attrib["width"].strip())
+            else:
+                tranX = im.size[0]
+
+            if "x" in subItem.attrib:
+                offsetX = int(subItem.attrib["x"].strip())
+            else:
+                offsetX = 0
+            
+            if "y" in subItem.attrib:
+                offsetY = int(subItem.attrib["y"].strip())
+            else:
+                offsetY = 0
+
+            style_new = style
+    
+            if "stroke" in subItem.attrib:
+                stroke_coll = subItem.attrib["stroke"].strip()
+                stroke_tr = (int(colors.to_rgb(stroke_coll)[0]*255),int(colors.to_rgb(stroke_coll)[1]*255),int(colors.to_rgb(stroke_coll)[2]*255))
+                style_new["stroke"] = stroke_tr
+
+            if "fill" in subItem.attrib:
+                fill_coll = subItem.attrib["fill"].strip()
+                fill_tr = (int(colors.to_rgb(fill_coll)[0]*255),int(colors.to_rgb(fill_coll)[1]*255),int(colors.to_rgb(fill_coll)[2]*255))
+                style_new["fill"] = fill_tr
+            
+            if "stroke-width" in subItem.attrib:
+                stroke_width = int(subItem.attrib["stroke"].strip())
+                style_new["stroke-width"] = stroke_width 
+
+            scale_new = (int(tranX/sizeX),int(tranY/sizeY))
+            im_new = Image.new('RGB', (sizeX * scale_new[0],sizeY * scale_new[1]),"White")
+            draw_new = ImageDraw.Draw(im_new)
+            style_new["stroke-width"] = style_new["stroke-width"] * scale_new[0]
+            im_new, draw_new = parseSVG(im_new,draw_new,subItem,scale_new,style_new)
+            # im_res = im_new.resize((tranX,tranY),PIL.Image.ANTIALIAS)
+            im.paste(im_new,(offsetX,offsetY))#,mask=im_new)
+
+        if "circle" in subItem.tag:
+            cx,cy,r = 0,0,0
+
+            if "cx" in subItem.attrib:
+                cx = int(subItem.attrib["cx"].strip())
+            if "cy" in subItem.attrib:
+                cy = int(subItem.attrib["cy"].strip())
+            if "r" in subItem.attrib:
+                r = int(subItem.attrib["r"].strip())
+
+            im = draw_circle(im,draw,cx*scale[0],cy * scale[1],r*scale[0],style)
+
+    return im,draw
+
+def main(): 
+    tree = ET.parse('test.svg')
+    root = tree.getroot()
+
+    if "svg" in root.tag:
+        if "viewBox" in root.attrib:
+            im = Image.new('RGB', (int(root.attrib["viewBox"].split()[2]), int(root.attrib["viewBox"].split()[3])),"White")
+        elif "width" in root.attrib and "height" in root.attrib:
+            im = Image.new('RGB', (int(root.attrib["width"]), int(root.attrib["height"])),"White")
+        else:
+            print("SVG file invalid")
+            exit()
+    else:
+        print("SVG file invalid")
+        exit()
+
+    style = {}
+    
+    if "stroke" in root.attrib:
+        stroke_coll = root.attrib["stroke"].strip()
+        stroke_tr = (int(colors.to_rgb(stroke_coll)[0]*255),int(colors.to_rgb(stroke_coll)[1]*255),int(colors.to_rgb(stroke_coll)[2]*255))
+        style["stroke"] = stroke_tr
+
+    if "fill" in root.attrib:
+        fill_coll = root.attrib["fill"].strip()
+        fill_tr = (int(colors.to_rgb(fill_coll)[0]*255),int(colors.to_rgb(fill_coll)[1]*255),int(colors.to_rgb(fill_coll)[2]*255))
+        style["fill"] = fill_tr
+    
+    if "stroke-width" in root.attrib:
+        stroke_width = int(root.attrib["stroke"].strip())
+        style["stroke-width"] = stroke_width 
+    
+    draw = ImageDraw.Draw(im)
+
+    parseSVG(im,draw,root,(1,1),style)
 
 
 
-tree = ET.parse('test.svg')
-root = tree.getroot()
+    
 
-im = Image.new('RGB', (1280, 720),"White")
-draw = ImageDraw.Draw(im)
 
-fill_coll = "Red"
-fill_tr = (int(colors.to_rgb(fill_coll)[0]*255),int(colors.to_rgb(fill_coll)[1]*255),int(colors.to_rgb(fill_coll)[2]*255))
 
-stroke_coll = "Red"
-stroke_tr = (int(colors.to_rgb(stroke_coll)[0]*255),int(colors.to_rgb(stroke_coll)[1]*255),int(colors.to_rgb(stroke_coll)[2]*255))
 
-style = {"fill":fill_tr,"stroke":stroke_tr,"stroke-width" : 10}
+
+    # fill_coll = "Red"
+    # fill_tr = (int(colors.to_rgb(fill_coll)[0]*255),int(colors.to_rgb(fill_coll)[1]*255),int(colors.to_rgb(fill_coll)[2]*255))
+
+    # stroke_coll = "Red"
+    # stroke_tr = (int(colors.to_rgb(stroke_coll)[0]*255),int(colors.to_rgb(stroke_coll)[1]*255),int(colors.to_rgb(stroke_coll)[2]*255))
+
+    # style = {"fill":fill_tr,"stroke":stroke_tr,"stroke-width" : 10}
+    # draw_path(im,draw, [["M",(60,100)],["A",[60,40,10,0,0,(140,100)]]], style = style)
+
+
+    im.save("test.png", "PNG")
+
+if __name__ == "__main__": 
+    main() 
+
+
+# fill_coll = "Red"
+# fill_tr = (int(colors.to_rgb(fill_coll)[0]*255),int(colors.to_rgb(fill_coll)[1]*255),int(colors.to_rgb(fill_coll)[2]*255))
+
+# stroke_coll = "Red"
+# stroke_tr = (int(colors.to_rgb(stroke_coll)[0]*255),int(colors.to_rgb(stroke_coll)[1]*255),int(colors.to_rgb(stroke_coll)[2]*255))
+
+# style = {"fill":fill_tr,"stroke":stroke_tr,"stroke-width" : 10}
 
 # draw_rect(draw,xcoord= 20 , ycoord = 20, width = 300, height = 90, style = style, rx = 95, ry = 15)
 # draw_circle(draw, cx = 500, cy = 500, r = 100, style = style)
@@ -547,10 +678,7 @@ style = {"fill":fill_tr,"stroke":stroke_tr,"stroke-width" : 10}
 # draw_path(draw, [["M",(60,100)],["A",[60,40,10,0,1,(140,100)]]], style = style)
 # draw_path(draw, [["M",(60,100)],["A",[60,40,10,0,0,(140,100)]]], style = style)
 # draw_circle(draw, cx = 100, cy = 100, r = 1, style = style)
-draw_path(draw, [["M",(250,10)],["l",(-40,80)],["l",(80,0)],["z"]], style = style)
+# draw_path(draw, [["M",(250,10)],["l",(-40,80)],["l",(80,0)],["z"]], style = style)
 
 
 
-
-
-im.save("test.png", "PNG")
