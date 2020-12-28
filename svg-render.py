@@ -165,14 +165,7 @@ def draw_line(im,draw, x1 = 0, x2 = 0, y1 = 0, y2 = 0, style = {"fill" : None, "
 
 def draw_polyline(im,draw, points = [(0,0)], style = {"fill" : None, "stroke" : "Black", "stroke-width" : 1}):
 
-    if "fill" not in style.keys():
-        style["fill"] = None
-    
-    if "stroke" not in style.keys():
-        style["stroke"] = "Black"
-
-    if "stroke-width" not in style.keys():
-        style["stroke-width"] = 1
+    style = defaultStyle(style)
     
     if style["fill"] != None:
         points.append(points[0])
@@ -210,7 +203,7 @@ def draw_polyline(im,draw, points = [(0,0)], style = {"fill" : None, "stroke" : 
     else:
         draw.line(points, fill = style["stroke"], width = style["stroke-width"], joint = "curve")
 
-    return
+    return im
 
 def draw_path(im,draw, descr = None, style = {"fill" : None, "stroke" : "Black", "stroke-width" : 1}):
 
@@ -484,9 +477,12 @@ def parseStyle(subItem,style):
         style_new["stroke"] = stroke_tr
 
     if "fill" in subItem.attrib:
-        fill_coll = subItem.attrib["fill"].strip()
-        fill_tr = (int(colors.to_rgb(fill_coll)[0]*255),int(colors.to_rgb(fill_coll)[1]*255),int(colors.to_rgb(fill_coll)[2]*255))
-        style_new["fill"] = fill_tr
+        if subItem.attrib["fill"].lower() == "none":
+            style_new["fill"] = None
+        else:
+            fill_coll = subItem.attrib["fill"].strip()
+            fill_tr = (int(colors.to_rgb(fill_coll)[0]*255),int(colors.to_rgb(fill_coll)[1]*255),int(colors.to_rgb(fill_coll)[2]*255))
+            style_new["fill"] = fill_tr
     
     if "stroke-width" in subItem.attrib:
         stroke_width = int(subItem.attrib["stroke-width"].strip())
@@ -617,7 +613,24 @@ def parseSVG(im,draw,root,scale,style = {"fill" : None, "stroke" : "Black", "str
             style_new = parseStyle(subItem,style)
             style_new["stroke-width"] = style_new["stroke-width"] * scale[0]
 
-            im = draw_line(im,draw,x1,x2,y1,y2,style) 
+            im = draw_line(im,draw,x1* scale[0],x2 * scale[0],y1 * scale[1],y2 * scale[1],style_new) 
+
+        if "polyline" in subItem.tag:
+
+            points = []
+
+            if "points" in subItem.attrib:
+                for item in subItem.attrib["points"].strip().split():
+                    points.append((int(item.split(",")[0]) * scale[0],int(item.split(",")[1]))*scale[1])
+
+            style_new = parseStyle(subItem,style)
+            if "fill" not in subItem.attrib:
+                style_new["fill"] = (0,0,0)
+
+            style_new["stroke-width"] = style_new["stroke-width"] * scale[0]
+
+            print(style_new)
+            im = draw_polyline(im,draw,points,style_new)
 
 
     return im,draw

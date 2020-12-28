@@ -1,6 +1,8 @@
-<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-  <line x1="0" y1="80" x2="100" y2="20" stroke="black" />
+<svg viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg">
+  <!-- Example of a polyline with the default fill -->
+  <polyline points="0,100 50,25 50,75 100,0" />
 
-  <!-- If you do not specify the stroke
-       color the line will not be visible -->
+  <!-- Example of the same polyline shape with stroke and no fill -->
+  <polyline points="100,100 150,25 150,75 200,0"
+            fill="none" stroke="black" />
 </svg>
