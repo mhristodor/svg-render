@@ -138,41 +138,30 @@ def draw_circle(im,draw, cx = 0 , cy = 0, r = 0, style = {"fill" : None, "stroke
     
     if style["fill"] != None:
         ImageDraw.floodfill(im, (cx, cy), style["fill"])
+    else:
+        ImageDraw.floodfill(im, (cx, cy), (0,0,0))
 
     return im
 
 def draw_ellipse(im,draw, cx = 0 , cy = 0, rx = 0, ry = 0, style = {"fill" : None, "stroke" : "Black", "stroke-width" : 1}):
 
-    if "fill" not in style.keys():
-        style["fill"] = None
-    
-    if "stroke" not in style.keys():
-        style["stroke"] = "Black"
-
-    if "stroke-width" not in style.keys():
-        style["stroke-width"] = 1
+    style = defaultStyle(style)
 
     draw.arc([cx - rx,cy - ry,cx + rx, cy + ry], 0, 360, style["stroke"] ,width = style["stroke-width"])
     
     if style["fill"] != None:
         ImageDraw.floodfill(im, (cx, cy), style["fill"])
-
-    return 
+    else:
+        ImageDraw.floodfill(im, (cx, cy), (0,0,0))
+    return im
 
 def draw_line(im,draw, x1 = 0, x2 = 0, y1 = 0, y2 = 0, style = {"fill" : None, "stroke" : "Black", "stroke-width" : 1}):
-
-    if "fill" not in style.keys():
-        style["fill"] = None
     
-    if "stroke" not in style.keys():
-        style["stroke"] = "Black"
-
-    if "stroke-width" not in style.keys():
-        style["stroke-width"] = 1
+    style = defaultStyle(style)
 
     draw.line([(x1,y1),(x2,y2)], fill = style["stroke"], width = style["stroke-width"], joint = "curve")
 
-    return 
+    return im
 
 def draw_polyline(im,draw, points = [(0,0)], style = {"fill" : None, "stroke" : "Black", "stroke-width" : 1}):
 
@@ -500,7 +489,7 @@ def parseStyle(subItem,style):
         style_new["fill"] = fill_tr
     
     if "stroke-width" in subItem.attrib:
-        stroke_width = int(subItem.attrib["stroke"].strip())
+        stroke_width = int(subItem.attrib["stroke-width"].strip())
         style_new["stroke-width"] = stroke_width 
 
     return style_new
@@ -597,8 +586,38 @@ def parseSVG(im,draw,root,scale,style = {"fill" : None, "stroke" : "Black", "str
             im = draw_rect(im,draw,x * scale[0] ,y * scale[1],width * scale[0],height * scale[1],
                 rx * scale[0],ry * scale[1],style_new)
 
+        if "ellipse" in subItem.tag:
+            cx,cy,rx,ry = 0,0,0,0
 
+            if "cx" in subItem.attrib:
+                cx = int(subItem.attrib["cx"].strip())
+            if "cy" in subItem.attrib:
+                cy = int(subItem.attrib["cy"].strip())
+            if "rx" in subItem.attrib:
+                rx = int(subItem.attrib["rx"].strip())
+            if "ry" in subItem.attrib:
+                ry = int(subItem.attrib["ry"].strip())
 
+            style_new = parseStyle(subItem,style)
+            style_new["stroke-width"] = style_new["stroke-width"] * scale[0]
+            im = draw_ellipse(im,draw,cx * scale[0] ,cy * scale[1],rx * scale[0],ry * scale[1],style_new)
+
+        if "line" in subItem.tag:
+            x1,x2,y1,y2 = 0,0,0,0
+
+            if "x1" in subItem.attrib:
+                x1 = int(subItem.attrib["x1"].strip())
+            if "y1" in subItem.attrib:
+                y1 = int(subItem.attrib["y1"].strip())
+            if "x2" in subItem.attrib:
+                x2 = int(subItem.attrib["x2"].strip())
+            if "y2" in subItem.attrib:
+                y2 = int(subItem.attrib["y2"].strip())
+
+            style_new = parseStyle(subItem,style)
+            style_new["stroke-width"] = style_new["stroke-width"] * scale[0]
+
+            im = draw_line(im,draw,x1,x2,y1,y2,style) 
 
 
     return im,draw
