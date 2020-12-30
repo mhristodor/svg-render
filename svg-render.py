@@ -6,6 +6,7 @@ from matplotlib import colors
 import numpy as np
 import math
 import io
+import cairo
 
 def getAngle(cx,cy,x,y):
     
@@ -196,8 +197,8 @@ def draw_polyline(im,draw, points = [(0,0)], style = {"fill" : None, "stroke" : 
 
         if noPint:
 
-            ImageDraw.floodfill(im,(((((((points[1][0] + points[len(points) - 2][0]) / 2 + points[0][0]) /2) + points[0][0])/2) + points[0][0])/2 , 
-                            ((((((points[1][1] + points[len(points) - 2][1]) / 2 + points[0][1]) /2) + points[0][1])/2) + points[0][1])/2), style["fill"])
+            ImageDraw.floodfill(im,((points[1][0] + points[len(points) - 2][0]) / 2, 
+                            (points[1][1] + points[len(points) - 2][1]) / 2), style["fill"])
 
 
     else:
@@ -207,20 +208,14 @@ def draw_polyline(im,draw, points = [(0,0)], style = {"fill" : None, "stroke" : 
 
 def draw_path(im,draw, descr = None, style = {"fill" : None, "stroke" : "Black", "stroke-width" : 1}):
 
-    if "fill" not in style.keys():
-        style["fill"] = None
-    
-    if "stroke" not in style.keys():
-        style["stroke"] = "Black"
-
-    if "stroke-width" not in style.keys():
-        style["stroke-width"] = 1
+    style = defaultStyle(style)
 
     startPoint = None
     startPointQuad = None
     lastCmd = None
     lastCmdQuad = None
     initialPoint = None
+    pointsMulty = []
 
     if descr != None:
         for cmd in descr:
@@ -232,11 +227,14 @@ def draw_path(im,draw, descr = None, style = {"fill" : None, "stroke" : "Black",
                 if initialPoint == None:
                     initialPoint = cmd[1]
 
+                pointsMulty.append([cmd[1]])
                 continue
             if cmd[0] == "m":
                 startPoint = (startPoint[0] + cmd[1][0],startPoint[1] + cmd[1][1])
                 lastCmd = None
                 lastCmdQuad = None
+
+                pointsMulty[-1].append(startPoint)
 
                 continue
             if cmd[0] == "L":
@@ -245,108 +243,216 @@ def draw_path(im,draw, descr = None, style = {"fill" : None, "stroke" : "Black",
                 lastCmd = None
                 lastCmdQuad = None
 
+                pointsMulty[-1].append(startPoint)
                 continue
             if cmd[0] == "l":
                 draw.line([startPoint,(startPoint[0] + cmd[1][0],startPoint[1] + cmd[1][1])], fill = style["stroke"], width = style["stroke-width"], joint = "curve")
                 startPoint = (startPoint[0] + cmd[1][0],startPoint[1] + cmd[1][1])
                 lastCmdQuad = None
                 lastCmd = None
+
+                pointsMulty[-1].append(startPoint)
+
                 continue
             if cmd[0] == "H":
                 draw.line([startPoint,(cmd[1],startPoint[1])], fill = style["stroke"], width = style["stroke-width"], joint = "curve")
                 startPoint = (cmd[1],startPoint[1])
                 lastCmdQuad = None
                 lastCmd = None
+
+                pointsMulty[-1].append(startPoint)
                 continue
             if cmd[0] == "h":
                 draw.line([startPoint,(startPoint[0] + cmd[1],startPoint[1])], fill = style["stroke"], width = style["stroke-width"], joint = "curve")
                 startPoint = (startPoint[0] + cmd[1], startPoint[1])
                 lastCmdQuad = None
                 lastCmd = None
+                pointsMulty[-1].append(startPoint)
                 continue
             if cmd[0] == "V":
                 draw.line([startPoint,(startPoint[0],cmd[1])], fill = style["stroke"], width = style["stroke-width"], joint = "curve")
                 startPoint = (startPoint[0],cmd[1])
                 lastCmdQuad = None
                 lastCmd = None
+                pointsMulty[-1].append(startPoint)
                 continue
             if cmd[0] == "v":
                 draw.line([startPoint,(startPoint[0],startPoint[1] + cmd[1])], fill = style["stroke"], width = style["stroke-width"], joint = "curve")
                 startPoint = (startPoint,startPoint[1] + cmd[1])
                 lastCmdQuad = None
                 lastCmd = None
+                pointsMulty[-1].append(startPoint)
                 continue
             if cmd[0] == "C":
-                numSteps = 1000
-                coorArrX = [startPoint[0],cmd[1][0][0],cmd[1][1][0],cmd[1][2][0]]
-                coorArrY = [startPoint[1],cmd[1][0][1],cmd[1][1][1],cmd[1][2][1]]
+                # numSteps = 1000
+                # coorArrX = [startPoint[0],cmd[1][0][0],cmd[1][1][0],cmd[1][2][0]]
+                # coorArrY = [startPoint[1],cmd[1][0][1],cmd[1][1][1],cmd[1][2][1]]
                 
-                for k in range(numSteps):
-                    t = float(k) / (numSteps - 1)
-                    x = int(getLocation(coorArrX, 0, 3, t))
-                    y = int(getLocation(coorArrY, 0, 3, t))
-                    im.putpixel((x, y), style["stroke"])
+                # for k in range(numSteps):
+                #     t = float(k) / (numSteps - 1)
+                #     x = int(getLocation(coorArrX, 0, 3, t))
+                #     y = int(getLocation(coorArrY, 0, 3, t))
+                #     im.putpixel((x, y), style["stroke"])
+                
+                surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, im.size[0], im.size[1])
+                ctx = cairo.Context(surface)
+                ctx.set_source_rgba(0.0, 0.0, 0.0, 0.0)
+                ctx.paint()
+                ctx.move_to(startPoint[0],startPoint[1])
+                ctx.curve_to(cmd[1][0][0],cmd[1][0][1],cmd[1][1][0],cmd[1][1][1],cmd[1][2][0],cmd[1][2][1])
+                ctx.set_source_rgb(style["stroke"][0],style["stroke"][1],style["stroke"][2])
+                ctx.set_line_width(style["stroke-width"])
+                ctx.stroke()
+
+                buf = io.BytesIO()
+                surface.write_to_png(buf)
+                buf.seek(0)
+
+                im_tmp = Image.open(buf)
+
+                offset = (0,0)
+
+                im.paste(im_tmp,offset,mask=im_tmp)
+
                 lastCmd = (2 * cmd[1][2][0] - cmd[1][1][0],2 * cmd[1][2][1] - cmd[1][1][1])
                 startPoint = (cmd[1][2][0],cmd[1][2][1])
                 lastCmdQuad = None
 
+                pointsMulty[-1].append(startPoint)
+
                 continue
             if cmd[0] == "c":
-                numSteps = 1000
-                coorArrX = [startPoint[0],startPoint[0] + cmd[1][0][0],startPoint[0] + cmd[1][1][0],startPoint[0] + cmd[1][2][0]]
-                coorArrY = [startPoint[1],startPoint[1] + cmd[1][0][1],startPoint[1] + cmd[1][1][1],startPoint[1] + cmd[1][2][1]]
+                # numSteps = 1000
+                # coorArrX = [startPoint[0],startPoint[0] + cmd[1][0][0],startPoint[0] + cmd[1][1][0],startPoint[0] + cmd[1][2][0]]
+                # coorArrY = [startPoint[1],startPoint[1] + cmd[1][0][1],startPoint[1] + cmd[1][1][1],startPoint[1] + cmd[1][2][1]]
                 
-                for k in range(numSteps):
-                    t = float(k) / (numSteps - 1)
-                    x = int(getLocation(coorArrX, 0, 3, t))
-                    y = int(getLocation(coorArrY, 0, 3, t))
-                    im.putpixel((x, y), style["stroke"])
+                # for k in range(numSteps):
+                #     t = float(k) / (numSteps - 1)
+                #     x = int(getLocation(coorArrX, 0, 3, t))
+                #     y = int(getLocation(coorArrY, 0, 3, t))
+                #     im.putpixel((x, y), style["stroke"])
                 
+                surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, im.size[0], im.size[1])
+                ctx = cairo.Context(surface)
+                ctx.set_source_rgba(0.0, 0.0, 0.0, 0.0)
+                ctx.paint()
+                ctx.move_to(startPoint[0],startPoint[1])
+                ctx.curve_to(startPoint[0] + cmd[1][0][0],startPoint[1] + cmd[1][0][1],startPoint[0] + cmd[1][1][0],startPoint[1] + cmd[1][1][1],startPoint[0] + cmd[1][2][0],startPoint[1] + cmd[1][2][1])
+                ctx.set_source_rgb(style["stroke"][0],style["stroke"][1],style["stroke"][2])
+                ctx.set_line_width(style["stroke-width"])
+                ctx.stroke()
+
+                buf = io.BytesIO()
+                surface.write_to_png(buf)
+                buf.seek(0)
+
+                im_tmp = Image.open(buf)
+
+                offset = (0,0)
+
+                im.paste(im_tmp,offset,mask=im_tmp)
+
                 lastCmd = (2 * (startPoint[0] + cmd[1][2][0]) - startPoint[0] - cmd[1][1][0] ,
                     2 * (startPoint[1] + cmd[1][2][1]) - startPoint[1] - cmd[1][1][1])
                 startPoint = (startPoint[0] + cmd[1][2][0],startPoint[1] + cmd[1][2][1])
                 lastCmdQuad = None
 
+                pointsMulty[-1].append(startPoint)
+
                 continue
             if cmd[0] == "S":
-                numSteps = 1000
-                if lastCmd != None:
-                    coorArrX = [startPoint[0],lastCmd[0],cmd[1][0][0],cmd[1][1][0]]
-                    coorArrY = [startPoint[1],lastCmd[1],cmd[1][0][1],cmd[1][1][1]]
-                else:
-                    coorArrX = [startPoint[0],startPoint[0],cmd[1][0][0],cmd[1][1][0]]
-                    coorArrY = [startPoint[1],startPoint[1],cmd[1][0][1],cmd[1][1][1]]
+                # numSteps = 1000
+                # if lastCmd != None:
+                #     coorArrX = [startPoint[0],lastCmd[0],cmd[1][0][0],cmd[1][1][0]]
+                #     coorArrY = [startPoint[1],lastCmd[1],cmd[1][0][1],cmd[1][1][1]]
+                # else:
+                #     coorArrX = [startPoint[0],startPoint[0],cmd[1][0][0],cmd[1][1][0]]
+                #     coorArrY = [startPoint[1],startPoint[1],cmd[1][0][1],cmd[1][1][1]]
 
-                for k in range(numSteps):
-                    t = float(k) / (numSteps - 1)
-                    x = int(getLocation(coorArrX, 0, 3, t))
-                    y = int(getLocation(coorArrY, 0, 3, t))
-                    im.putpixel((x, y), style["stroke"])
+                # for k in range(numSteps):
+                #     t = float(k) / (numSteps - 1)
+                #     x = int(getLocation(coorArrX, 0, 3, t))
+                #     y = int(getLocation(coorArrY, 0, 3, t))
+                #     im.putpixel((x, y), style["stroke"])
+
+                surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, im.size[0], im.size[1])
+                ctx = cairo.Context(surface)
+                ctx.set_source_rgba(0.0, 0.0, 0.0, 0.0)
+                ctx.paint()
+                ctx.move_to(startPoint[0],startPoint[1])
+                
+                if lastCmd != None:
+                    ctx.curve_to(lastCmd[0],lastCmd[1],cmd[1][0][0],cmd[1][0][1],cmd[1][1][0],cmd[1][1][1])
+                else:
+                    ctx.curve_to(startPoint[0],startPoint[1],cmd[1][0][0],cmd[1][0][1],cmd[1][1][0],cmd[1][1][1])
+                
+                ctx.set_source_rgb(style["stroke"][0],style["stroke"][1],style["stroke"][2])
+                ctx.set_line_width(style["stroke-width"])
+                ctx.stroke()
+
+                buf = io.BytesIO()
+                surface.write_to_png(buf)
+                buf.seek(0)
+
+                im_tmp = Image.open(buf)
+
+                offset = (0,0)
+
+                im.paste(im_tmp,offset,mask=im_tmp)
 
                 lastCmd = (2 * cmd[1][1][0] - cmd[1][0][0],2 * cmd[1][1][1] - cmd[1][0][1])
                 startPoint = (cmd[1][1][0],cmd[1][1][1])
                 lastCmdQuad = None
 
+                pointsMulty[-1].append(startPoint)
+
                 continue
             if cmd[0] == "s":
-                numSteps = 1000
-                if lastCmd != None:
-                    coorArrX = [startPoint[0],lastCmd[0],startPoint[0] + cmd[1][0][0],startPoint[0] + cmd[1][1][0]]
-                    coorArrY = [startPoint[1],lastCmd[1],startPoint[1] + cmd[1][0][1],startPoint[1] + cmd[1][1][1]]
-                else:
-                    coorArrX = [startPoint[0],startPoint[0],startPoint[0] +cmd[1][0][0],startPoint[0] +cmd[1][1][0]]
-                    coorArrY = [startPoint[1],startPoint[1],startPoint[1] +cmd[1][0][1],startPoint[1] +startPoint[1] +cmd[1][1][1]]
+                # numSteps = 1000
+                # if lastCmd != None:
+                #     coorArrX = [startPoint[0],lastCmd[0],startPoint[0] + cmd[1][0][0],startPoint[0] + cmd[1][1][0]]
+                #     coorArrY = [startPoint[1],lastCmd[1],startPoint[1] + cmd[1][0][1],startPoint[1] + cmd[1][1][1]]
+                # else:
+                #     coorArrX = [startPoint[0],startPoint[0],startPoint[0] +cmd[1][0][0],startPoint[0] +cmd[1][1][0]]
+                #     coorArrY = [startPoint[1],startPoint[1],startPoint[1] +cmd[1][0][1],startPoint[1] +startPoint[1] +cmd[1][1][1]]
                 
-                for k in range(numSteps):
-                    t = float(k) / (numSteps - 1)
-                    x = int(getLocation(coorArrX, 0, 3, t))
-                    y = int(getLocation(coorArrY, 0, 3, t))
-                    im.putpixel((x, y), style["stroke"])
+                # for k in range(numSteps):
+                #     t = float(k) / (numSteps - 1)
+                #     x = int(getLocation(coorArrX, 0, 3, t))
+                #     y = int(getLocation(coorArrY, 0, 3, t))
+                #     im.putpixel((x, y), style["stroke"])
+
+                 surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, im.size[0], im.size[1])
+                ctx = cairo.Context(surface)
+                ctx.set_source_rgba(0.0, 0.0, 0.0, 0.0)
+                ctx.paint()
+                ctx.move_to(startPoint[0],startPoint[1])
+                
+                if lastCmd != None:
+                    ctx.curve_to(lastCmd[0],lastCmd[1],startPoint[0] + cmd[1][0][0],startPoint[1] + cmd[1][0][1],startPoint[0] + cmd[1][1][0],startPoint[1] + cmd[1][1][1])
+                else:
+                    ctx.curve_to(startPoint[0],startPoint[1],startPoint[0] + cmd[1][0][0],startPoint[1] + cmd[1][0][1],startPoint[0] + cmd[1][1][0],startPoint[1] + cmd[1][1][1])
+                
+                ctx.set_source_rgb(style["stroke"][0],style["stroke"][1],style["stroke"][2])
+                ctx.set_line_width(style["stroke-width"])
+                ctx.stroke()
+
+                buf = io.BytesIO()
+                surface.write_to_png(buf)
+                buf.seek(0)
+
+                im_tmp = Image.open(buf)
+
+                offset = (0,0)
+
+                im.paste(im_tmp,offset,mask=im_tmp)
 
                 lastCmd = (2 * (startPoint[0] + cmd[1][1][0]) - startPoint[0] + cmd[1][0][0] ,
                     2 * (startPoint[1] + cmd[1][1][1]) - startPoint[1] + cmd[1][0][1])
                 startPoint = (startPoint[0] + cmd[1][1][0],startPoint[1] + cmd[1][1][1])
                 lastCmdQuad = None
+
+                pointsMulty[-1].append(startPoint)
                 
                 continue
             if cmd[0] == "Q":
@@ -359,6 +465,8 @@ def draw_path(im,draw, descr = None, style = {"fill" : None, "stroke" : "Black",
                 lastCmd = None
                 startPoint = (cmd[1][1][0],cmd[1][1][1])
                 lastCmdQuad = (2 * cmd[1][1][0] - cmd[1][0][0],2 * cmd[1][1][1] - cmd[1][0][1])
+
+                pointsMulty[-1].append(startPoint)
 
                 continue
 
@@ -373,6 +481,8 @@ def draw_path(im,draw, descr = None, style = {"fill" : None, "stroke" : "Black",
                 startPoint = (startPoint[0] + cmd[1][1][0],startPoint[1] + cmd[1][1][1])
                 lastCmdQuad = (2 * (startPoint[0] + cmd[1][1][0]) - cmd[1][0][0] - startPoint[0],
                     2 * (cmd[1][1][1] + startPoint[1]) - cmd[1][0][1] - startPoint[1])
+
+                pointsMulty[-1].append(startPoint)
 
                 continue
 
@@ -395,6 +505,8 @@ def draw_path(im,draw, descr = None, style = {"fill" : None, "stroke" : "Black",
                 startPoint = (cmd[1][0][0],cmd[1][0][1])
                 lastCmdQuad = (2 * cmd[1][0][0] - nextPoint[0],2 * cmd[1][0][1] - nextPoint[1])
 
+                pointsMulty[-1].append(startPoint)
+
                 continue
 
             if cmd[0] == "t":
@@ -415,6 +527,8 @@ def draw_path(im,draw, descr = None, style = {"fill" : None, "stroke" : "Black",
                 lastCmd = None
                 startPoint = (startPoint[0] + cmd[1][0][0],startPoint[1] + cmd[1][0][1])
                 lastCmdQuad = (2 * startPoint[0] - nextPoint[0],2 * startPoint[1]  - nextPoint[1])
+
+                pointsMulty[-1].append(startPoint)
                 continue
 
             if cmd[0] == "A":
@@ -432,11 +546,13 @@ def draw_path(im,draw, descr = None, style = {"fill" : None, "stroke" : "Black",
                 if cmd[1][3] == cmd[1][4]:
                     offset = (0, 0)
                 else:
-                    offset = (0, cmd[1][1])
+                    offset = (0, int(-cmd[1][1]/4))
 
                 im.paste(im_flip,offset,mask=im_flip)
 
                 startPoint = cmd[1][5]
+
+                pointsMulty[-1].append(startPoint)
                 continue
 
             if cmd[0] == "a":
@@ -459,6 +575,7 @@ def draw_path(im,draw, descr = None, style = {"fill" : None, "stroke" : "Black",
                 im.paste(im_flip,offset,mask=im_flip)
 
                 startPoint = (cmd[1][5][0] + startPoint[0],cmd[1][5][1] + startPoint[1])
+                pointsMulty[-1].append(startPoint)
                 continue 
 
             if cmd[0].lower() == "z":
@@ -466,6 +583,38 @@ def draw_path(im,draw, descr = None, style = {"fill" : None, "stroke" : "Black",
                 startPoint = None
                 initialPoint = None
                 continue 
+
+    for points in pointsMulty:
+        if style["fill"] != None:
+            points.append(points[0])
+            noPint = True
+            for i in range(len(points) - 2):
+                for j in range(i,len(points) - 1):
+                    
+                    L1 = line(points[i],points[i+1])
+                    L2 = line(points[j],points[j+1])
+
+                    pint = intersection(L1,L2)
+                    if pint:
+                        x1, x2, x3 = points[i][0], points[i + 1][0], pint[0]
+                        y1, y2, y3 = points[i][1], points[i + 1][1], pint[1]
+
+                        onSeg = (min(x1, x2) <= x3 <= max(x1, x2)) and (min(y1, y2) <= y3 <= max(y1, y2))
+                        pint = (int(pint[0]),int(pint[1]))
+
+                        if onSeg and pint not in points:
+
+                            noPint = False
+                            ImageDraw.floodfill(im,((((((points[i+1][0] + points[j][0]) / 2 + pint[0]) /2) + pint[0])/2) + style["stroke-width"] /2 , 
+                                (((((points[i+1][1] + points[j][1]) / 2 + pint[1]) /2) + pint[1])/2)  + style["stroke-width"] / 2), style["fill"])
+                            ImageDraw.floodfill(im,((((((points[i][0] + points[j+1][0]) / 2 + pint[0]) /2) + pint[0])/2) - style["stroke-width"] / 2, 
+                                (((((points[i][1] + points[j+1][1]) / 2 + pint[1]) /2) + pint[1])/2) - style["stroke-width"] / 2), style["fill"])
+
+            if noPint:
+
+                ImageDraw.floodfill(im,((points[1][0] + points[len(points) - 2][0]) / 2 , 
+                                (points[1][1] + points[len(points) - 2][1]) / 2 ), style["fill"])
+    return im
 
 def parseStyle(subItem,style):
     
@@ -629,31 +778,31 @@ def parseSVG(im,draw,root,scale,style = {"fill" : None, "stroke" : "Black", "str
 
             style_new["stroke-width"] = style_new["stroke-width"] * scale[0]
 
-            print(style_new)
             im = draw_polyline(im,draw,points,style_new)
-
-
+    
     return im,draw
 
 def main(): 
-    tree = ET.parse('test.svg')
-    root = tree.getroot()
+    # tree = ET.parse('test.svg')
+    # root = tree.getroot()
 
-    if "svg" in root.tag:
-        if "viewBox" in root.attrib:
-            im = Image.new('RGB', (int(root.attrib["viewBox"].split()[2]), int(root.attrib["viewBox"].split()[3])),"White")
-        elif "width" in root.attrib and "height" in root.attrib:
-            im = Image.new('RGB', (int(root.attrib["width"]), int(root.attrib["height"])),"White")
-        else:
-            print("SVG file invalid")
-            exit()
-    else:
-        print("SVG file invalid")
-        exit()
+    # if "svg" in root.tag:
+    #     if "viewBox" in root.attrib:
+    #         im = Image.new('RGB', (int(root.attrib["viewBox"].split()[2]), int(root.attrib["viewBox"].split()[3])),"White")
+    #     elif "width" in root.attrib and "height" in root.attrib:
+    #         im = Image.new('RGB', (int(root.attrib["width"]), int(root.attrib["height"])),"White")
+    #     else:
+    #         print("SVG file invalid")
+    #         exit()
+    # else:
+    #     print("SVG file invalid")
+    #     exit()
 
-    style = parseStyle(root,{})
-    draw = ImageDraw.Draw(im)
-    parseSVG(im,draw,root,(1,1),style)
+    # style = parseStyle(root,{})
+    # draw = ImageDraw.Draw(im)
+    # parseSVG(im,draw,root,(1,1),style)
+
+    
 
 
 
@@ -663,15 +812,19 @@ def main():
 
 
 
-    # fill_coll = "Red"
-    # fill_tr = (int(colors.to_rgb(fill_coll)[0]*255),int(colors.to_rgb(fill_coll)[1]*255),int(colors.to_rgb(fill_coll)[2]*255))
+    fill_coll = "Blue"
+    fill_tr = (int(colors.to_rgb(fill_coll)[0]*255),int(colors.to_rgb(fill_coll)[1]*255),int(colors.to_rgb(fill_coll)[2]*255))
 
-    # stroke_coll = "Red"
-    # stroke_tr = (int(colors.to_rgb(stroke_coll)[0]*255),int(colors.to_rgb(stroke_coll)[1]*255),int(colors.to_rgb(stroke_coll)[2]*255))
+    stroke_coll = "Black"
+    stroke_tr = (int(colors.to_rgb(stroke_coll)[0]*255),int(colors.to_rgb(stroke_coll)[1]*255),int(colors.to_rgb(stroke_coll)[2]*255))
 
-    # style = {"fill":fill_tr,"stroke":stroke_tr,"stroke-width" : 10}
+    style = {"fill":None,"stroke":stroke_tr,"stroke-width" : 5}
     # draw_path(im,draw, [["M",(60,100)],["A",[60,40,10,0,0,(140,100)]]], style = style)
-
+    im = Image.new('RGB', (100,100) ,"White")
+    draw = ImageDraw.Draw(im)
+    # im = draw_path(im,draw, [["M",(10,30)],["A",[20,20,0,0,1,(50,30)]],
+        # ["A",[20,20,0,0,1,(90,30)]],["Q",[(90,60),(50,90)]],["Q",[(10,60),(10,30)]]], style = style)
+    im = draw_path(im,draw, [["M",(10,90)],["C",[(30,90),(25,10),(50,10)]]], style = style)
 
     im.save("test.png", "PNG")
 
