@@ -278,7 +278,7 @@ def draw_path(im,draw, descr = None, style = {"fill" : None, "stroke" : "Black",
                 continue
             if cmd[0] == "v":
                 draw.line([startPoint,(startPoint[0],startPoint[1] + cmd[1])], fill = style["stroke"], width = style["stroke-width"], joint = "curve")
-                startPoint = (startPoint,startPoint[1] + cmd[1])
+                startPoint = (startPoint[0],startPoint[1] + cmd[1])
                 lastCmdQuad = None
                 lastCmd = None
                 pointsMulty[-1].append(startPoint)
@@ -483,18 +483,6 @@ def draw_path(im,draw, descr = None, style = {"fill" : None, "stroke" : "Black",
 
             if cmd[0] == "T":
                 nextPoint = None
-                # if lastCmdQuad != None:
-                #     P = lambda t: (1 - t)**2 * np.array([startPoint[0],startPoint[1]]) + 2 * t * (1 - t) * np.array([lastCmdQuad[0],
-                #         lastCmdQuad[1]]) + t**2 * np.array([cmd[1][0][0],cmd[1][0][1]])
-                #     nextPoint = [lastCmdQuad[0],lastCmdQuad[1]]
-                # else:
-                #     P = lambda t: (1 - t)**2 * np.array([startPoint[0],startPoint[1]]) + 2 * t * (1 - t) * np.array([startPoint[0],
-                #         startPoint[1]]) + t**2 * np.array([cmd[1][0][0],cmd[1][0][1]])
-                #     nextPoint = [startPoint[0],startPoint[1]]
-                
-                # points = np.array([P(t) for t in np.linspace(0, 1, 1000)])
-                # for point in points:
-                #     im.putpixel((int(point[0]),int(point[1])), style["stroke"])
 
                 surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, im.size[0], im.size[1])
                 ctx = cairo.Context(surface)
@@ -541,18 +529,6 @@ def draw_path(im,draw, descr = None, style = {"fill" : None, "stroke" : "Black",
 
             if cmd[0] == "t":
                 nextPoint = None
-                # if lastCmdQuad != None:
-                #     P = lambda t: (1 - t)**2 * np.array([startPoint[0],startPoint[1]]) + 2 * t * (1 - t) * np.array([lastCmdQuad[0],
-                #         lastCmdQuad[1]]) + t**2 * np.array([startPoint[0] + cmd[1][0][0], startPoint[1] + cmd[1][0][1]])
-                #     nextPoint = [lastCmdQuad[0],lastCmdQuad[1]]
-                # else:
-                #     P = lambda t: (1 - t)**2 * np.array([startPoint[0],startPoint[1]]) + 2 * t * (1 - t) * np.array([startPoint[0],
-                #         startPoint[1]]) + t**2 * np.array([startPoint[0] + cmd[1][0][0],startPoint[1] + cmd[1][0][1]])
-                #     nextPoint = [startPoint[0],startPoint[1]]
-                    
-                # points = np.array([P(t) for t in np.linspace(0, 1, 1000)])
-                # for point in points:
-                #     im.putpixel((int(point[0]),int(point[1])), style["stroke"])
 
                 surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, im.size[0], im.size[1])
                 ctx = cairo.Context(surface)
@@ -608,10 +584,11 @@ def draw_path(im,draw, descr = None, style = {"fill" : None, "stroke" : "Black",
                     draw2.arc([cx-cmd[1][0],cy-cmd[1][1],cx+cmd[1][0],cy+cmd[1][1]],p1 + cmd[1][2] ,p2 + cmd[1][2] ,style["stroke"],width = style["stroke-width"])
                 im_new = im2.rotate(cmd[1][2])
                 im_flip = ImageOps.flip(im_new)
+                # im_flip = im_new
                 if cmd[1][3] == cmd[1][4]:
                     offset = (0, 0)
                 else:
-                    offset = (0, int(-cmd[1][1]/4))
+                    offset = (0, int((im.size[1]/2 - startPoint[1])*2 - im.size[1]/2))
 
                 im.paste(im_flip,offset,mask=im_flip)
 
@@ -707,15 +684,155 @@ def parseStyle(subItem,style):
 def defaultStyle(style):
 
     if "fill" not in style.keys():
-        style["fill"] = None
+        style["fill"] = (0,0,0)
     
     if "stroke" not in style.keys():
-        style["stroke"] = "Black"
+        style["stroke"] = (0,0,0)
 
     if "stroke-width" not in style.keys():
         style["stroke-width"] = 1
 
     return style
+
+def representsInt(s):
+    try: 
+        int(s)
+        return True
+    except ValueError:
+        return False
+
+def chunks(lst, n):
+    for i in range(0, len(lst), n):
+        yield lst[i:i + n]
+
+def translateCommands(cmdlist):
+    
+    output = []
+    seperateCmds = []
+    tmp = []
+    
+    for item in cmdlist:
+        if not representsInt(item):
+
+            if tmp != []:
+                seperateCmds.append(tmp)
+            tmp = []
+            tmp.append(item)
+        
+        if representsInt(item):
+            tmp.append(item)
+    
+    seperateCmds.append(tmp)
+    
+    for item in seperateCmds:
+        if item[0].lower() == "m":
+            tmp = chunks(item[1:],2)
+            cmd = [item[0]]
+            padding = []
+            for it in tmp:
+                if cmd == [item[0]]:
+                    cmd.append((int(it[0]),int(it[1])))
+                else:
+                    if item[0] == "M":
+                        padding.append(["L",(int(it[0]),int(it[1]))])
+                    else:
+                        padding.append(["l",(int(it[0]),int(it[1]))])
+            output.append(cmd)
+            if padding != []:
+                output += padding
+        
+        if item[0].lower() == "l":
+            tmp = chunks(item[1:],2)
+            cmd = [item[0]]
+            padding = []
+            for it in tmp:
+                if cmd == [item[0]]:
+                    cmd.append((int(it[0]),int(it[1])))
+                else:
+                    padding.append([item[0],(int(it[0]),int(it[1]))])
+            output.append(cmd)
+            if padding != []:
+                output += padding
+
+        if item[0].lower() == "h" or item[0].lower() == "v":
+            tmp = chunks(item[1:],1)
+            cmd = [item[0]]
+            padding = []
+            for it in tmp:
+                if cmd == [item[0]]:
+                    cmd.append(int(it[0]))
+                else:
+                    padding.append([item[0],int(it[0])])
+            output.append(cmd)
+            if padding != []:
+                output += padding
+
+        if item[0].lower() == "c":
+            tmp = chunks(item[1:],6)
+            cmd = [item[0]]
+            padding = []
+            for it in tmp:
+                if cmd == [item[0]]:
+                    cmd.append([(int(it[0]),int(it[1])),(int(it[2]),int(it[3])),(int(it[4]),int(it[5]))])
+                else:
+                    padding.append([item[0],[(int(it[0]),int(it[1])),(int(it[2]),int(it[3])),(int(it[4]),int(it[5]))]])
+            output.append(cmd)
+            if padding != []:
+                output += padding
+
+        if item[0].lower() == "s":
+            tmp = chunks(item[1:],4)
+            cmd = [item[0]]
+            padding = []
+            for it in tmp:
+                if cmd == [item[0]]:
+                    cmd.append([(int(it[0]),int(it[1])),(int(it[2]),int(it[3]))])
+                else:
+                    padding.append([item[0],[(int(it[0]),int(it[1])),(int(it[2]),int(it[3]))]])
+            output.append(cmd)
+            if padding != []:
+                output += padding
+
+        if item[0].lower() == "q":
+            tmp = chunks(item[1:],4)
+            cmd = [item[0]]
+            padding = []
+            for it in tmp:
+                if cmd == [item[0]]:
+                    cmd.append([(int(it[0]),int(it[1])),(int(it[2]),int(it[3]))])
+                else:
+                    padding.append([item[0],[(int(it[0]),int(it[1])),(int(it[2]),int(it[3]))]])
+            output.append(cmd)
+            if padding != []:
+                output += padding
+
+        if item[0].lower() == "t":
+            tmp = chunks(item[1:],2)
+            cmd = [item[0]]
+            padding = []
+            for it in tmp:
+                if cmd == [item[0]]:
+                    cmd.append([(int(it[0]),int(it[1]))])
+                else:
+                    padding.append([item[0],[(int(it[0]),int(it[1]))]])
+            output.append(cmd)
+            if padding != []:
+                output += padding
+
+        if item[0].lower() == "a":
+            tmp = chunks(item[1:],7)
+            cmd = [item[0]]
+            padding = []
+            for it in tmp:
+                if cmd == [item[0]]:
+                    cmd.append([int(it[0]),int(it[1]),int(it[2]),int(it[3]),int(it[4]),(int(it[5]),int(it[6]))])
+                else:
+                    padding.append([item[0],[int(it[0]),int(it[1]),int(it[2]),int(it[3]),int(it[4]),(int(it[5]),int(it[6]))]])
+            output.append(cmd)
+            if padding != []:
+                output += padding
+    print(output)
+    return output
 
 def parseSVG(im,draw,root,scale,style = {"fill" : None, "stroke" : "Black", "stroke-width" : 1}):
     
@@ -845,51 +962,72 @@ def parseSVG(im,draw,root,scale,style = {"fill" : None, "stroke" : "Black", "str
 
             im = draw_polyline(im,draw,points,style_new)
     
+
+        if "path" in subItem.tag:
+
+            style_new = parseStyle(subItem,style)
+            if "fill" not in subItem.attrib:
+                style_new["fill"] = (0,0,0)
+
+            style_new["stroke-width"] = style_new["stroke-width"] * scale[0]
+
+            if "d" in subItem.attrib:
+                
+                fullstr = subItem.attrib["d"].strip()
+                
+                fullstr = fullstr.replace("\n","")
+                fullstr = fullstr.replace(","," ")
+                fullstr = fullstr.replace("-"," -")
+                fullstr = fullstr.split()
+                cmd = translateCommands(fullstr)
+                
+                im = draw_path(im,draw,cmd,style_new)
+
     return im,draw
 
 def main(): 
-    # tree = ET.parse('test.svg')
-    # root = tree.getroot()
+    tree = ET.parse('test.svg')
+    root = tree.getroot()
 
-    # if "svg" in root.tag:
-    #     if "viewBox" in root.attrib:
-    #         im = Image.new('RGB', (int(root.attrib["viewBox"].split()[2]), int(root.attrib["viewBox"].split()[3])),"White")
-    #     elif "width" in root.attrib and "height" in root.attrib:
-    #         im = Image.new('RGB', (int(root.attrib["width"]), int(root.attrib["height"])),"White")
-    #     else:
-    #         print("SVG file invalid")
-    #         exit()
-    # else:
-    #     print("SVG file invalid")
-    #     exit()
+    if "svg" in root.tag:
+        if "viewBox" in root.attrib:
+            im = Image.new('RGB', (int(root.attrib["viewBox"].split()[2]), int(root.attrib["viewBox"].split()[3])),"White")
+        elif "width" in root.attrib and "height" in root.attrib:
+            im = Image.new('RGB', (int(root.attrib["width"]), int(root.attrib["height"])),"White")
+        else:
+            print("SVG file invalid")
+            exit()
+    else:
+        print("SVG file invalid")
+        exit()
 
-    # style = parseStyle(root,{})
-    # draw = ImageDraw.Draw(im)
-    # parseSVG(im,draw,root,(1,1),style)
-
-    
-
-
-
-    
-
-
-
-
-
-    fill_coll = "Blue"
-    fill_tr = (int(colors.to_rgb(fill_coll)[0]*255),int(colors.to_rgb(fill_coll)[1]*255),int(colors.to_rgb(fill_coll)[2]*255))
-
-    stroke_coll = "Black"
-    stroke_tr = (int(colors.to_rgb(stroke_coll)[0]*255),int(colors.to_rgb(stroke_coll)[1]*255),int(colors.to_rgb(stroke_coll)[2]*255))
-
-    style = {"fill":None,"stroke":stroke_tr,"stroke-width" : 1}
-    # draw_path(im,draw, [["M",(60,100)],["A",[60,40,10,0,0,(140,100)]]], style = style)
-    im = Image.new('RGB', (300,100) ,"White")
+    style = parseStyle(root,{})
     draw = ImageDraw.Draw(im)
-    # im = draw_path(im,draw, [["M",(10,30)],["A",[20,20,0,0,1,(50,30)]],
-        # ["A",[20,20,0,0,1,(90,30)]],["Q",[(90,60),(50,90)]],["Q",[(10,60),(10,30)]]], style = style)
-    im = draw_path(im,draw, [["M",(10,50)],["Q",[(25,25),(40,50)]],["t",[(30,0)]],["t",[(30,0)]],["t",[(30,0)]],["t",[(30,0)]],["t",[(30,0)]]], style = style)
+    parseSVG(im,draw,root,(1,1),style)
+
+    
+
+
+
+    
+
+
+
+
+
+    # fill_coll = "Blue"
+    # fill_tr = (int(colors.to_rgb(fill_coll)[0]*255),int(colors.to_rgb(fill_coll)[1]*255),int(colors.to_rgb(fill_coll)[2]*255))
+
+    # stroke_coll = "Black"
+    # stroke_tr = (int(colors.to_rgb(stroke_coll)[0]*255),int(colors.to_rgb(stroke_coll)[1]*255),int(colors.to_rgb(stroke_coll)[2]*255))
+
+    # style = {"fill":None,"stroke":stroke_tr,"stroke-width" : 1}
+    # # draw_path(im,draw, [["M",(60,100)],["A",[60,40,10,0,0,(140,100)]]], style = style)
+    # im = Image.new('RGB', (300,100) ,"White")
+    # draw = ImageDraw.Draw(im)
+    # # im = draw_path(im,draw, [["M",(10,30)],["A",[20,20,0,0,1,(50,30)]],
+    #     # ["A",[20,20,0,0,1,(90,30)]],["Q",[(90,60),(50,90)]],["Q",[(10,60),(10,30)]]], style = style)
+    # im = draw_path(im,draw, [["M",(10,50)],["Q",[(25,25),(40,50)]],["t",[(30,0)]],["t",[(30,0)]],["t",[(30,0)]],["t",[(30,0)]],["t",[(30,0)]]], style = style)
 
     im.save("test.png", "PNG")
 
