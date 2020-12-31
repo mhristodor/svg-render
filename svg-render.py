@@ -284,15 +284,6 @@ def draw_path(im,draw, descr = None, style = {"fill" : None, "stroke" : "Black",
                 pointsMulty[-1].append(startPoint)
                 continue
             if cmd[0] == "C":
-                # numSteps = 1000
-                # coorArrX = [startPoint[0],cmd[1][0][0],cmd[1][1][0],cmd[1][2][0]]
-                # coorArrY = [startPoint[1],cmd[1][0][1],cmd[1][1][1],cmd[1][2][1]]
-                
-                # for k in range(numSteps):
-                #     t = float(k) / (numSteps - 1)
-                #     x = int(getLocation(coorArrX, 0, 3, t))
-                #     y = int(getLocation(coorArrY, 0, 3, t))
-                #     im.putpixel((x, y), style["stroke"])
                 
                 surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, im.size[0], im.size[1])
                 ctx = cairo.Context(surface)
@@ -322,15 +313,6 @@ def draw_path(im,draw, descr = None, style = {"fill" : None, "stroke" : "Black",
 
                 continue
             if cmd[0] == "c":
-                # numSteps = 1000
-                # coorArrX = [startPoint[0],startPoint[0] + cmd[1][0][0],startPoint[0] + cmd[1][1][0],startPoint[0] + cmd[1][2][0]]
-                # coorArrY = [startPoint[1],startPoint[1] + cmd[1][0][1],startPoint[1] + cmd[1][1][1],startPoint[1] + cmd[1][2][1]]
-                
-                # for k in range(numSteps):
-                #     t = float(k) / (numSteps - 1)
-                #     x = int(getLocation(coorArrX, 0, 3, t))
-                #     y = int(getLocation(coorArrY, 0, 3, t))
-                #     im.putpixel((x, y), style["stroke"])
                 
                 surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, im.size[0], im.size[1])
                 ctx = cairo.Context(surface)
@@ -361,19 +343,6 @@ def draw_path(im,draw, descr = None, style = {"fill" : None, "stroke" : "Black",
 
                 continue
             if cmd[0] == "S":
-                # numSteps = 1000
-                # if lastCmd != None:
-                #     coorArrX = [startPoint[0],lastCmd[0],cmd[1][0][0],cmd[1][1][0]]
-                #     coorArrY = [startPoint[1],lastCmd[1],cmd[1][0][1],cmd[1][1][1]]
-                # else:
-                #     coorArrX = [startPoint[0],startPoint[0],cmd[1][0][0],cmd[1][1][0]]
-                #     coorArrY = [startPoint[1],startPoint[1],cmd[1][0][1],cmd[1][1][1]]
-
-                # for k in range(numSteps):
-                #     t = float(k) / (numSteps - 1)
-                #     x = int(getLocation(coorArrX, 0, 3, t))
-                #     y = int(getLocation(coorArrY, 0, 3, t))
-                #     im.putpixel((x, y), style["stroke"])
 
                 surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, im.size[0], im.size[1])
                 ctx = cairo.Context(surface)
@@ -408,21 +377,8 @@ def draw_path(im,draw, descr = None, style = {"fill" : None, "stroke" : "Black",
 
                 continue
             if cmd[0] == "s":
-                # numSteps = 1000
-                # if lastCmd != None:
-                #     coorArrX = [startPoint[0],lastCmd[0],startPoint[0] + cmd[1][0][0],startPoint[0] + cmd[1][1][0]]
-                #     coorArrY = [startPoint[1],lastCmd[1],startPoint[1] + cmd[1][0][1],startPoint[1] + cmd[1][1][1]]
-                # else:
-                #     coorArrX = [startPoint[0],startPoint[0],startPoint[0] +cmd[1][0][0],startPoint[0] +cmd[1][1][0]]
-                #     coorArrY = [startPoint[1],startPoint[1],startPoint[1] +cmd[1][0][1],startPoint[1] +startPoint[1] +cmd[1][1][1]]
                 
-                # for k in range(numSteps):
-                #     t = float(k) / (numSteps - 1)
-                #     x = int(getLocation(coorArrX, 0, 3, t))
-                #     y = int(getLocation(coorArrY, 0, 3, t))
-                #     im.putpixel((x, y), style["stroke"])
-
-                 surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, im.size[0], im.size[1])
+                surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, im.size[0], im.size[1])
                 ctx = cairo.Context(surface)
                 ctx.set_source_rgba(0.0, 0.0, 0.0, 0.0)
                 ctx.paint()
@@ -456,11 +412,31 @@ def draw_path(im,draw, descr = None, style = {"fill" : None, "stroke" : "Black",
                 
                 continue
             if cmd[0] == "Q":
-                P = lambda t: (1 - t)**2 * np.array([startPoint[0],startPoint[1]]) + 2 * t * (1 - t) * np.array([cmd[1][0][0],
-                    cmd[1][0][1]]) + t**2 * np.array([cmd[1][1][0],cmd[1][1][1]])
-                points = np.array([P(t) for t in np.linspace(0, 1, 1000)])
-                for point in points:
-                    im.putpixel((int(point[0]),int(point[1])), style["stroke"])
+
+                surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, im.size[0], im.size[1])
+                ctx = cairo.Context(surface)
+                ctx.set_source_rgba(0.0, 0.0, 0.0, 0.0)
+                ctx.paint()
+                ctx.move_to(startPoint[0],startPoint[1])
+                ctx.curve_to(2/3*cmd[1][0][0] + 1/3*startPoint[0],
+                    2/3*cmd[1][0][1] + 1/3 * startPoint[1],
+                    2/3*cmd[1][0][0] + 1/3 * cmd[1][1][0],
+                    2/3 *cmd[1][0][1] + 1/3 * cmd[1][1][1],
+                    cmd[1][1][0],cmd[1][1][1])
+                ctx.set_source_rgb(style["stroke"][0],style["stroke"][1],style["stroke"][2])
+                ctx.set_line_width(style["stroke-width"])
+                ctx.stroke()
+
+                buf = io.BytesIO()
+                surface.write_to_png(buf)
+                buf.seek(0)
+
+                im_tmp = Image.open(buf)
+
+                offset = (0,0)
+
+                im.paste(im_tmp,offset,mask=im_tmp)
+
 
                 lastCmd = None
                 startPoint = (cmd[1][1][0],cmd[1][1][1])
@@ -471,11 +447,30 @@ def draw_path(im,draw, descr = None, style = {"fill" : None, "stroke" : "Black",
                 continue
 
             if cmd[0] == "q":
-                P = lambda t: (1 - t)**2 * np.array([startPoint[0],startPoint[1]]) + 2 * t * (1 - t) * np.array([startPoint[0] + cmd[1][0][0],
-                    startPoint[1] + cmd[1][0][1]]) + t**2 * np.array([startPoint[0] + cmd[1][1][0],startPoint[1] + cmd[1][1][1]])
-                points = np.array([P(t) for t in np.linspace(0, 1, 1000)])
-                for point in points:
-                    im.putpixel((int(point[0]),int(point[1])), style["stroke"])
+
+                surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, im.size[0], im.size[1])
+                ctx = cairo.Context(surface)
+                ctx.set_source_rgba(0.0, 0.0, 0.0, 0.0)
+                ctx.paint()
+                ctx.move_to(startPoint[0],startPoint[1])
+                ctx.curve_to(2/3*(startPoint[0] + cmd[1][0][0]) + 1/3*startPoint[0],
+                    2/3*(startPoint[1] + cmd[1][0][1]) + 1/3 * startPoint[1],
+                    2/3*(startPoint[0] + cmd[1][0][0]) + 1/3 * (startPoint[0] + cmd[1][1][0]),
+                    2/3*(startPoint[1] + cmd[1][0][1]) + 1/3 * (startPoint[1] + cmd[1][1][1]),
+                    (startPoint[0] + cmd[1][1][0]),(startPoint[1] + cmd[1][1][1]))
+                ctx.set_source_rgb(style["stroke"][0],style["stroke"][1],style["stroke"][2])
+                ctx.set_line_width(style["stroke-width"])
+                ctx.stroke()
+
+                buf = io.BytesIO()
+                surface.write_to_png(buf)
+                buf.seek(0)
+
+                im_tmp = Image.open(buf)
+
+                offset = (0,0)
+
+                im.paste(im_tmp,offset,mask=im_tmp)
 
                 lastCmd = None
                 startPoint = (startPoint[0] + cmd[1][1][0],startPoint[1] + cmd[1][1][1])
@@ -488,18 +483,53 @@ def draw_path(im,draw, descr = None, style = {"fill" : None, "stroke" : "Black",
 
             if cmd[0] == "T":
                 nextPoint = None
+                # if lastCmdQuad != None:
+                #     P = lambda t: (1 - t)**2 * np.array([startPoint[0],startPoint[1]]) + 2 * t * (1 - t) * np.array([lastCmdQuad[0],
+                #         lastCmdQuad[1]]) + t**2 * np.array([cmd[1][0][0],cmd[1][0][1]])
+                #     nextPoint = [lastCmdQuad[0],lastCmdQuad[1]]
+                # else:
+                #     P = lambda t: (1 - t)**2 * np.array([startPoint[0],startPoint[1]]) + 2 * t * (1 - t) * np.array([startPoint[0],
+                #         startPoint[1]]) + t**2 * np.array([cmd[1][0][0],cmd[1][0][1]])
+                #     nextPoint = [startPoint[0],startPoint[1]]
+                
+                # points = np.array([P(t) for t in np.linspace(0, 1, 1000)])
+                # for point in points:
+                #     im.putpixel((int(point[0]),int(point[1])), style["stroke"])
+
+                surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, im.size[0], im.size[1])
+                ctx = cairo.Context(surface)
+                ctx.set_source_rgba(0.0, 0.0, 0.0, 0.0)
+                ctx.paint()
+                ctx.move_to(startPoint[0],startPoint[1])
                 if lastCmdQuad != None:
-                    P = lambda t: (1 - t)**2 * np.array([startPoint[0],startPoint[1]]) + 2 * t * (1 - t) * np.array([lastCmdQuad[0],
-                        lastCmdQuad[1]]) + t**2 * np.array([cmd[1][0][0],cmd[1][0][1]])
+                    ctx.curve_to(2/3*lastCmdQuad[0] + 1/3*startPoint[0],
+                        2/3*lastCmdQuad[1] + 1/3 * startPoint[1],
+                        2/3*lastCmdQuad[0] + 1/3 * cmd[1][0][0],
+                        2/3*lastCmdQuad[1] + 1/3 * cmd[1][0][1],
+                        cmd[1][0][0],cmd[1][0][1])
                     nextPoint = [lastCmdQuad[0],lastCmdQuad[1]]
+
                 else:
-                    P = lambda t: (1 - t)**2 * np.array([startPoint[0],startPoint[1]]) + 2 * t * (1 - t) * np.array([startPoint[0],
-                        startPoint[1]]) + t**2 * np.array([cmd[1][0][0],cmd[1][0][1]])
+                    ctx.curve_to(2/3*startPoint[0] + 1/3*startPoint[0],
+                        2/3*startPoint[1] + 1/3 * startPoint[1],
+                        2/3*startPoint[0] + 1/3 * cmd[1][0][0],
+                        2/3*startPoint[1] + 1/3 * cmd[1][0][1],
+                        cmd[1][0][0],cmd[1][0][1])
                     nextPoint = [startPoint[0],startPoint[1]]
                 
-                points = np.array([P(t) for t in np.linspace(0, 1, 1000)])
-                for point in points:
-                    im.putpixel((int(point[0]),int(point[1])), style["stroke"])
+                ctx.set_source_rgb(style["stroke"][0],style["stroke"][1],style["stroke"][2])
+                ctx.set_line_width(style["stroke-width"])
+                ctx.stroke()
+
+                buf = io.BytesIO()
+                surface.write_to_png(buf)
+                buf.seek(0)
+
+                im_tmp = Image.open(buf)
+
+                offset = (0,0)
+
+                im.paste(im_tmp,offset,mask=im_tmp)
 
                 lastCmd = None
                 startPoint = (cmd[1][0][0],cmd[1][0][1])
@@ -511,18 +541,53 @@ def draw_path(im,draw, descr = None, style = {"fill" : None, "stroke" : "Black",
 
             if cmd[0] == "t":
                 nextPoint = None
-                if lastCmdQuad != None:
-                    P = lambda t: (1 - t)**2 * np.array([startPoint[0],startPoint[1]]) + 2 * t * (1 - t) * np.array([lastCmdQuad[0],
-                        lastCmdQuad[1]]) + t**2 * np.array([startPoint[0] + cmd[1][0][0], startPoint[1] + cmd[1][0][1]])
-                    nextPoint = [lastCmdQuad[0],lastCmdQuad[1]]
-                else:
-                    P = lambda t: (1 - t)**2 * np.array([startPoint[0],startPoint[1]]) + 2 * t * (1 - t) * np.array([startPoint[0],
-                        startPoint[1]]) + t**2 * np.array([startPoint[0] + cmd[1][0][0],startPoint[1] + cmd[1][0][1]])
-                    nextPoint = [startPoint[0],startPoint[1]]
+                # if lastCmdQuad != None:
+                #     P = lambda t: (1 - t)**2 * np.array([startPoint[0],startPoint[1]]) + 2 * t * (1 - t) * np.array([lastCmdQuad[0],
+                #         lastCmdQuad[1]]) + t**2 * np.array([startPoint[0] + cmd[1][0][0], startPoint[1] + cmd[1][0][1]])
+                #     nextPoint = [lastCmdQuad[0],lastCmdQuad[1]]
+                # else:
+                #     P = lambda t: (1 - t)**2 * np.array([startPoint[0],startPoint[1]]) + 2 * t * (1 - t) * np.array([startPoint[0],
+                #         startPoint[1]]) + t**2 * np.array([startPoint[0] + cmd[1][0][0],startPoint[1] + cmd[1][0][1]])
+                #     nextPoint = [startPoint[0],startPoint[1]]
                     
-                points = np.array([P(t) for t in np.linspace(0, 1, 1000)])
-                for point in points:
-                    im.putpixel((int(point[0]),int(point[1])), style["stroke"])
+                # points = np.array([P(t) for t in np.linspace(0, 1, 1000)])
+                # for point in points:
+                #     im.putpixel((int(point[0]),int(point[1])), style["stroke"])
+
+                surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, im.size[0], im.size[1])
+                ctx = cairo.Context(surface)
+                ctx.set_source_rgba(0.0, 0.0, 0.0, 0.0)
+                ctx.paint()
+                ctx.move_to(startPoint[0],startPoint[1])
+                if lastCmdQuad != None:
+                    ctx.curve_to(2/3*lastCmdQuad[0] + 1/3*startPoint[0],
+                        2/3*lastCmdQuad[1] + 1/3 * startPoint[1],
+                        2/3*lastCmdQuad[0] + 1/3 * (startPoint[0] + cmd[1][0][0]),
+                        2/3*lastCmdQuad[1] + 1/3 * (startPoint[1] + cmd[1][0][1]),
+                        (startPoint[0] + cmd[1][0][0]),(startPoint[1] + cmd[1][0][1]))
+                    nextPoint = [lastCmdQuad[0],lastCmdQuad[1]]
+
+                else:
+                    ctx.curve_to(2/3*startPoint[0] + 1/3*startPoint[0],
+                        2/3*startPoint[1] + 1/3 * startPoint[1],
+                        2/3*startPoint[0] + 1/3 * (startPoint[0] + cmd[1][0][0]),
+                        2/3*startPoint[1] + 1/3 * (startPoint[1] + cmd[1][0][1]),
+                        (startPoint[0] + cmd[1][0][0]),(startPoint[1] + cmd[1][0][1]))
+                    nextPoint = [startPoint[0],startPoint[1]]
+                
+                ctx.set_source_rgb(style["stroke"][0],style["stroke"][1],style["stroke"][2])
+                ctx.set_line_width(style["stroke-width"])
+                ctx.stroke()
+
+                buf = io.BytesIO()
+                surface.write_to_png(buf)
+                buf.seek(0)
+
+                im_tmp = Image.open(buf)
+
+                offset = (0,0)
+
+                im.paste(im_tmp,offset,mask=im_tmp)
 
                 lastCmd = None
                 startPoint = (startPoint[0] + cmd[1][0][0],startPoint[1] + cmd[1][0][1])
@@ -818,13 +883,13 @@ def main():
     stroke_coll = "Black"
     stroke_tr = (int(colors.to_rgb(stroke_coll)[0]*255),int(colors.to_rgb(stroke_coll)[1]*255),int(colors.to_rgb(stroke_coll)[2]*255))
 
-    style = {"fill":None,"stroke":stroke_tr,"stroke-width" : 5}
+    style = {"fill":None,"stroke":stroke_tr,"stroke-width" : 1}
     # draw_path(im,draw, [["M",(60,100)],["A",[60,40,10,0,0,(140,100)]]], style = style)
-    im = Image.new('RGB', (100,100) ,"White")
+    im = Image.new('RGB', (300,100) ,"White")
     draw = ImageDraw.Draw(im)
     # im = draw_path(im,draw, [["M",(10,30)],["A",[20,20,0,0,1,(50,30)]],
         # ["A",[20,20,0,0,1,(90,30)]],["Q",[(90,60),(50,90)]],["Q",[(10,60),(10,30)]]], style = style)
-    im = draw_path(im,draw, [["M",(10,90)],["C",[(30,90),(25,10),(50,10)]]], style = style)
+    im = draw_path(im,draw, [["M",(10,50)],["Q",[(25,25),(40,50)]],["t",[(30,0)]],["t",[(30,0)]],["t",[(30,0)]],["t",[(30,0)]],["t",[(30,0)]]], style = style)
 
     im.save("test.png", "PNG")
 
