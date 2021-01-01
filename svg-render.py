@@ -7,6 +7,7 @@ import numpy as np
 import math
 import io
 import cairo
+import argparse
 
 def getAngle(cx,cy,x,y):
     
@@ -579,7 +580,6 @@ def draw_path(im,draw, descr = None, style = {"fill" : None, "stroke" : "Black",
                 # im2 = Image.new('RGBA', im.size)
                 im2 = Image.new('RGBA', (2 * cmd[1][0] + style["stroke-width"],2 * cmd[1][1] + style["stroke-width"]))
                 draw2 = ImageDraw.Draw(im2)
-                print(cx,cy)
                 
                 # if (cmd[1][3] == 1 and cmd[1][4] == 1) or (cmd[1][3] == 0 and cmd[1][4] == 1):
                 #     draw2.arc([cx-cmd[1][0],cy-cmd[1][1],cx+cmd[1][0],cy+cmd[1][1]],p2 + cmd[1][2],p1+ cmd[1][2] ,style["stroke"],width = style["stroke-width"])
@@ -600,7 +600,7 @@ def draw_path(im,draw, descr = None, style = {"fill" : None, "stroke" : "Black",
                 #     offset = (0, 0)
                 # else:
                 #     offset = (0, 0)
-                offset = (int(cx-cmd[1][0] - style["stroke-width"]),int(cy-cmd[1][1] - style["stroke-width"]))
+                offset = (int(cx-cmd[1][0] - style["stroke-width"]) + 1,int(cy-cmd[1][1] - style["stroke-width"]) + 1)
 
                 im.paste(im_flip,offset,mask=im_flip)
 
@@ -843,164 +843,176 @@ def translateCommands(cmdlist):
             output.append(cmd)
             if padding != []:
                 output += padding
-    print(output)
+    # print(output)
     return output
 
 def parseSVG(im,draw,root,scale,style = {"fill" : None, "stroke" : "Black", "stroke-width" : 1}):
     
     style = defaultStyle(style)
-    
-    for subItem in root:
-        if subItem.tag.endswith("svg"):
-            
-            offsetX, offsetY, tranX, tranY,sizeX,sizeY = None,None,None,None,None,None
-
-            if "viewBox" in subItem.attrib:
-                sizeX = int(subItem.attrib["viewBox"].split()[2]) - int(subItem.attrib["viewBox"].split()[0])
-                sizeY = int(subItem.attrib["viewBox"].split()[3]) - int(subItem.attrib["viewBox"].split()[1])
-            else:
-                sizeX,sizeY = im.size
-            
-            if "height" in subItem.attrib:
-                tranY = int(subItem.attrib["height"].strip())
-            else:
-                tranY = im.size[1]
-
-            if "width" in subItem.attrib:
-                tranX = int(subItem.attrib["width"].strip())
-            else:
-                tranX = im.size[0]
-
-            if "x" in subItem.attrib:
-                offsetX = int(subItem.attrib["x"].strip())
-            else:
-                offsetX = 0
-            
-            if "y" in subItem.attrib:
-                offsetY = int(subItem.attrib["y"].strip())
-            else:
-                offsetY = 0
-
-            style_new = parseStyle(subItem,style)
-            scale_new = (int(tranX/sizeX),int(tranY/sizeY))
-            im_new = Image.new('RGB', (sizeX * scale_new[0],sizeY * scale_new[1]),"White")
-            draw_new = ImageDraw.Draw(im_new)
-            style_new["stroke-width"] = style_new["stroke-width"] * scale_new[0]
-            im_new, draw_new = parseSVG(im_new,draw_new,subItem,scale_new,style_new)
-            # im_res = im_new.resize((tranX,tranY),PIL.Image.ANTIALIAS)
-            im.paste(im_new,(offsetX,offsetY))#,mask=im_new)
-
-        if "circle" in subItem.tag:
-            cx,cy,r = 0,0,0
-
-            if "cx" in subItem.attrib:
-                cx = int(subItem.attrib["cx"].strip())
-            if "cy" in subItem.attrib:
-                cy = int(subItem.attrib["cy"].strip())
-            if "r" in subItem.attrib:
-                r = int(subItem.attrib["r"].strip())
-
-            style_new = parseStyle(subItem,style)
-            style_new["stroke-width"] = style_new["stroke-width"] * scale[0]
-            im = draw_circle(im,draw,cx*scale[0],cy * scale[1],r*scale[0],style_new)
-
-        if "rect" in subItem.tag:
-            x,y,width,height,rx,ry = 0,0,0,0,0,0
-
-            if "x" in subItem.attrib:
-                x = int(subItem.attrib["x"].strip())
-            if "y" in subItem.attrib:
-                y = int(subItem.attrib["y"].strip())
-            if "width" in subItem.attrib:
-                width = int(subItem.attrib["width"].strip())
-            if "height" in subItem.attrib:
-                height = int(subItem.attrib["height"].strip())
-            if "rx" in subItem.attrib:
-                rx = int(subItem.attrib["rx"].strip())
-            if "ry" in subItem.attrib:
-                ry = int(subItem.attrib["ry"].strip())
-
-            style_new = parseStyle(subItem,style)
-            style_new["stroke-width"] = style_new["stroke-width"] * scale[0]
-            im = draw_rect(im,draw,x * scale[0] ,y * scale[1],width * scale[0],height * scale[1],
-                rx * scale[0],ry * scale[1],style_new)
-
-        if "ellipse" in subItem.tag:
-            cx,cy,rx,ry = 0,0,0,0
-
-            if "cx" in subItem.attrib:
-                cx = int(subItem.attrib["cx"].strip())
-            if "cy" in subItem.attrib:
-                cy = int(subItem.attrib["cy"].strip())
-            if "rx" in subItem.attrib:
-                rx = int(subItem.attrib["rx"].strip())
-            if "ry" in subItem.attrib:
-                ry = int(subItem.attrib["ry"].strip())
-
-            style_new = parseStyle(subItem,style)
-            style_new["stroke-width"] = style_new["stroke-width"] * scale[0]
-            im = draw_ellipse(im,draw,cx * scale[0] ,cy * scale[1],rx * scale[0],ry * scale[1],style_new)
-
-        if "line" in subItem.tag:
-            x1,x2,y1,y2 = 0,0,0,0
-
-            if "x1" in subItem.attrib:
-                x1 = int(subItem.attrib["x1"].strip())
-            if "y1" in subItem.attrib:
-                y1 = int(subItem.attrib["y1"].strip())
-            if "x2" in subItem.attrib:
-                x2 = int(subItem.attrib["x2"].strip())
-            if "y2" in subItem.attrib:
-                y2 = int(subItem.attrib["y2"].strip())
-
-            style_new = parseStyle(subItem,style)
-            style_new["stroke-width"] = style_new["stroke-width"] * scale[0]
-
-            im = draw_line(im,draw,x1* scale[0],x2 * scale[0],y1 * scale[1],y2 * scale[1],style_new) 
-
-        if "polyline" in subItem.tag:
-
-            points = []
-
-            if "points" in subItem.attrib:
-                for item in subItem.attrib["points"].strip().split():
-                    points.append((int(item.split(",")[0]) * scale[0],int(item.split(",")[1]))*scale[1])
-
-            style_new = parseStyle(subItem,style)
-            if "fill" not in subItem.attrib:
-                style_new["fill"] = (0,0,0)
-
-            style_new["stroke-width"] = style_new["stroke-width"] * scale[0]
-
-            im = draw_polyline(im,draw,points,style_new)
-    
-
-        if "path" in subItem.tag:
-
-            style_new = parseStyle(subItem,style)
-            if "fill" not in subItem.attrib:
-                style_new["fill"] = (0,0,0)
-
-            style_new["stroke-width"] = style_new["stroke-width"] * scale[0]
-
-            if "d" in subItem.attrib:
+    try:
+        for subItem in root:
+            if subItem.tag.endswith("svg"):
                 
-                fullstr = subItem.attrib["d"].strip()
+                offsetX, offsetY, tranX, tranY,sizeX,sizeY = None,None,None,None,None,None
+
+                if "viewBox" in subItem.attrib:
+                    sizeX = int(subItem.attrib["viewBox"].split()[2]) - int(subItem.attrib["viewBox"].split()[0])
+                    sizeY = int(subItem.attrib["viewBox"].split()[3]) - int(subItem.attrib["viewBox"].split()[1])
+                else:
+                    sizeX,sizeY = im.size
                 
-                fullstr = fullstr.replace("\n","")
-                fullstr = fullstr.replace(","," ")
-                fullstr = fullstr.replace("-"," -")
-                fullstr = fullstr.split()
-                cmd = translateCommands(fullstr)
+                if "height" in subItem.attrib:
+                    tranY = int(subItem.attrib["height"].strip())
+                else:
+                    tranY = im.size[1]
+
+                if "width" in subItem.attrib:
+                    tranX = int(subItem.attrib["width"].strip())
+                else:
+                    tranX = im.size[0]
+
+                if "x" in subItem.attrib:
+                    offsetX = int(subItem.attrib["x"].strip())
+                else:
+                    offsetX = 0
                 
-                im = draw_path(im,draw,cmd,style_new)
+                if "y" in subItem.attrib:
+                    offsetY = int(subItem.attrib["y"].strip())
+                else:
+                    offsetY = 0
+
+                style_new = parseStyle(subItem,style)
+                scale_new = (int(tranX/sizeX),int(tranY/sizeY))
+                im_new = Image.new('RGB', (sizeX * scale_new[0],sizeY * scale_new[1]),"White")
+                draw_new = ImageDraw.Draw(im_new)
+                style_new["stroke-width"] = style_new["stroke-width"] * scale_new[0]
+                im_new, draw_new = parseSVG(im_new,draw_new,subItem,scale_new,style_new)
+                # im_res = im_new.resize((tranX,tranY),PIL.Image.ANTIALIAS)
+                im.paste(im_new,(offsetX,offsetY))#,mask=im_new)
+
+            if "circle" in subItem.tag:
+                cx,cy,r = 0,0,0
+
+                if "cx" in subItem.attrib:
+                    cx = int(subItem.attrib["cx"].strip())
+                if "cy" in subItem.attrib:
+                    cy = int(subItem.attrib["cy"].strip())
+                if "r" in subItem.attrib:
+                    r = int(subItem.attrib["r"].strip())
+
+                style_new = parseStyle(subItem,style)
+                style_new["stroke-width"] = style_new["stroke-width"] * scale[0]
+                im = draw_circle(im,draw,cx*scale[0],cy * scale[1],r*scale[0],style_new)
+
+            if "rect" in subItem.tag:
+                x,y,width,height,rx,ry = 0,0,0,0,0,0
+
+                if "x" in subItem.attrib:
+                    x = int(subItem.attrib["x"].strip())
+                if "y" in subItem.attrib:
+                    y = int(subItem.attrib["y"].strip())
+                if "width" in subItem.attrib:
+                    width = int(subItem.attrib["width"].strip())
+                if "height" in subItem.attrib:
+                    height = int(subItem.attrib["height"].strip())
+                if "rx" in subItem.attrib:
+                    rx = int(subItem.attrib["rx"].strip())
+                if "ry" in subItem.attrib:
+                    ry = int(subItem.attrib["ry"].strip())
+
+                style_new = parseStyle(subItem,style)
+                style_new["stroke-width"] = style_new["stroke-width"] * scale[0]
+                im = draw_rect(im,draw,x * scale[0] ,y * scale[1],width * scale[0],height * scale[1],
+                    rx * scale[0],ry * scale[1],style_new)
+
+            if "ellipse" in subItem.tag:
+                cx,cy,rx,ry = 0,0,0,0
+
+                if "cx" in subItem.attrib:
+                    cx = int(subItem.attrib["cx"].strip())
+                if "cy" in subItem.attrib:
+                    cy = int(subItem.attrib["cy"].strip())
+                if "rx" in subItem.attrib:
+                    rx = int(subItem.attrib["rx"].strip())
+                if "ry" in subItem.attrib:
+                    ry = int(subItem.attrib["ry"].strip())
+
+                style_new = parseStyle(subItem,style)
+                style_new["stroke-width"] = style_new["stroke-width"] * scale[0]
+                im = draw_ellipse(im,draw,cx * scale[0] ,cy * scale[1],rx * scale[0],ry * scale[1],style_new)
+
+            if "line" in subItem.tag:
+                x1,x2,y1,y2 = 0,0,0,0
+
+                if "x1" in subItem.attrib:
+                    x1 = int(subItem.attrib["x1"].strip())
+                if "y1" in subItem.attrib:
+                    y1 = int(subItem.attrib["y1"].strip())
+                if "x2" in subItem.attrib:
+                    x2 = int(subItem.attrib["x2"].strip())
+                if "y2" in subItem.attrib:
+                    y2 = int(subItem.attrib["y2"].strip())
+
+                style_new = parseStyle(subItem,style)
+                style_new["stroke-width"] = style_new["stroke-width"] * scale[0]
+
+                im = draw_line(im,draw,x1* scale[0],x2 * scale[0],y1 * scale[1],y2 * scale[1],style_new) 
+
+            if "polyline" in subItem.tag:
+
+                points = []
+
+                if "points" in subItem.attrib:
+                    for item in subItem.attrib["points"].strip().split():
+                        points.append((int(item.split(",")[0]) * scale[0],int(item.split(",")[1]))*scale[1])
+
+                style_new = parseStyle(subItem,style)
+                if "fill" not in subItem.attrib:
+                    style_new["fill"] = (0,0,0)
+
+                style_new["stroke-width"] = style_new["stroke-width"] * scale[0]
+
+                im = draw_polyline(im,draw,points,style_new)
+        
+
+            if "path" in subItem.tag:
+
+                style_new = parseStyle(subItem,style)
+                if "fill" not in subItem.attrib:
+                    style_new["fill"] = (0,0,0)
+
+                style_new["stroke-width"] = style_new["stroke-width"] * scale[0]
+
+                if "d" in subItem.attrib:
+                    
+                    fullstr = subItem.attrib["d"].strip()
+                    
+                    fullstr = fullstr.replace("\n","")
+                    fullstr = fullstr.replace(","," ")
+                    fullstr = fullstr.replace("-"," -")
+                    fullstr = fullstr.split()
+                    cmd = translateCommands(fullstr)
+                    
+                    im = draw_path(im,draw,cmd,style_new)
+    except:
+        print("Parsing error! Only int numbers accepted")
+        exit()
 
     return im,draw
 
 def main(): 
-    tree = ET.parse('test.svg')
-    root = tree.getroot()
+    parser = argparse.ArgumentParser(description='SVG renderer by Hristodor Minu-Mihail')
+    parser.add_argument('file_path', metavar='file', type=str,
+                    help='SVG file to be rendered')
+    args = parser.parse_args()
 
+    try:
+        tree = ET.parse(args.file_path)
+    except:
+        print("No file such as " + args.file_path)
+        exit()
+    
+    root = tree.getroot()
     if "svg" in root.tag:
         if "viewBox" in root.attrib:
             im = Image.new('RGB', (int(root.attrib["viewBox"].split()[2]), int(root.attrib["viewBox"].split()[3])),"White")
@@ -1017,57 +1029,9 @@ def main():
     draw = ImageDraw.Draw(im)
     parseSVG(im,draw,root,(1,1),style)
 
-    
-
-
-
-    
-
-
-
-
-
-    # fill_coll = "Blue"
-    # fill_tr = (int(colors.to_rgb(fill_coll)[0]*255),int(colors.to_rgb(fill_coll)[1]*255),int(colors.to_rgb(fill_coll)[2]*255))
-
-    # stroke_coll = "Black"
-    # stroke_tr = (int(colors.to_rgb(stroke_coll)[0]*255),int(colors.to_rgb(stroke_coll)[1]*255),int(colors.to_rgb(stroke_coll)[2]*255))
-
-    # style = {"fill":None,"stroke":stroke_tr,"stroke-width" : 1}
-    # # draw_path(im,draw, [["M",(60,100)],["A",[60,40,10,0,0,(140,100)]]], style = style)
-    # im = Image.new('RGB', (300,100) ,"White")
-    # draw = ImageDraw.Draw(im)
-    # # im = draw_path(im,draw, [["M",(10,30)],["A",[20,20,0,0,1,(50,30)]],
-    #     # ["A",[20,20,0,0,1,(90,30)]],["Q",[(90,60),(50,90)]],["Q",[(10,60),(10,30)]]], style = style)
-    # im = draw_path(im,draw, [["M",(10,50)],["Q",[(25,25),(40,50)]],["t",[(30,0)]],["t",[(30,0)]],["t",[(30,0)]],["t",[(30,0)]],["t",[(30,0)]]], style = style)
-
-    im.save("test.png", "PNG")
+    im.save(args.file_path[:-3] + "png", "PNG")
+    print("Done")
+    im.show()
 
 if __name__ == "__main__": 
     main() 
-
-
-# fill_coll = "Red"
-# fill_tr = (int(colors.to_rgb(fill_coll)[0]*255),int(colors.to_rgb(fill_coll)[1]*255),int(colors.to_rgb(fill_coll)[2]*255))
-
-# stroke_coll = "Red"
-# stroke_tr = (int(colors.to_rgb(stroke_coll)[0]*255),int(colors.to_rgb(stroke_coll)[1]*255),int(colors.to_rgb(stroke_coll)[2]*255))
-
-# style = {"fill":fill_tr,"stroke":stroke_tr,"stroke-width" : 10}
-
-# draw_rect(draw,xcoord= 20 , ycoord = 20, width = 300, height = 90, style = style, rx = 95, ry = 15)
-# draw_circle(draw, cx = 500, cy = 500, r = 100, style = style)
-# draw_ellipse(draw, cx = 1000, cy = 500, rx = 100, ry = 50, style = style)
-# draw_line(draw, x1 = 10, y1 = 10, x2 = 10, y2= 500, style = style)
-# draw_polyline(draw, [(20,120), (70,45), (70,95), (120,20), (200,50), (10,10), (100,150)], style = style)
-# draw_path(draw, [["M",(10,90)],["C",[(30,90),(25,10),(50,10)]],["S",[(70,90),(90,90)]]], style = style)
-# draw_path(draw, [["M",(10,50)],["Q",[(25,25),(40,50)]],["t",[(30,0)]],["t",[(30,0)]],["t",[(30,0)]],["t",[(30,0)]]], style = style)
-# draw_path(draw, [["M",(60,100)],["A",[60,40,10,1,0,(140,100)]]], style = style)
-# draw_path(draw, [["M",(60,100)],["A",[60,40,10,1,1,(140,100)]]], style = style)
-# draw_path(draw, [["M",(60,100)],["A",[60,40,10,0,1,(140,100)]]], style = style)
-# draw_path(draw, [["M",(60,100)],["A",[60,40,10,0,0,(140,100)]]], style = style)
-# draw_circle(draw, cx = 100, cy = 100, r = 1, style = style)
-# draw_path(draw, [["M",(250,10)],["l",(-40,80)],["l",(80,0)],["z"]], style = style)
-
-
-

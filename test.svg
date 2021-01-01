@@ -1,19 +1,7 @@
-<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" stroke-width="10">
-
-  <!-- The influence of the arc flags with which the arc is drawn -->
-  <path fill="none" stroke="red"
-        d="M 60,100
-           A 60 40 10 1 0 140,100" />
-
-  <path fill="none" stroke="lime"
-        d="M 60,100
-           A 60 40 10 1 1 140,100" />
-
-  <path fill="none" stroke="purple"
-        d="M 60,100
-           A 60 40 10 0 1 140,100" />
-
-  <path fill="none" stroke="pink"
-        d="M 60,100
-           A 60 40 10 0 0 140,100" />
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <path d="M 10,30
+           A 20,20 0,0,1 50,30
+           A 20,20 0,0,1 90,30
+           Q 90,60 50,90
+           Q 10,60 10,30 z"/>
 </svg>
