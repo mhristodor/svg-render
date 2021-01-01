@@ -267,10 +267,9 @@ def draw_polyline(im, draw, points=[(0, 0)],
                                 style['fill'])
 
         if noPint:
-
-            ImageDraw.floodfill(im, ((points[1][0] + points[len(points)
-                                - 2][0]) / 2, (points[1][1]
-                                + points[len(points) - 2][1]) / 2),
+            ImageDraw.floodfill(im, ((points[1][0] + points[2][0]) / 2 
+                                - style["stroke-width"], (points[1][1]
+                                + points[2][1]) / 2 - style["stroke-width"]),
                                 style['fill'])
     else:
 
@@ -291,6 +290,7 @@ def draw_path(im, draw, descr=None,
     lastCmdQuad = None
     initialPoint = None
     pointsMulty = []
+    flagZ = False
 
     if descr != None:
         for cmd in descr:
@@ -831,11 +831,16 @@ def draw_path(im, draw, descr=None,
                 continue
 
             if cmd[0].lower() == 'z':
-                draw_line(draw, initialPoint[0], startPoint[0], 
+                draw_line(im,draw, initialPoint[0], startPoint[0], 
                           initialPoint[1], startPoint[1], style=style)
                 startPoint = None
                 initialPoint = None
+                flagZ = True
                 continue
+
+    if style['fill'] != None and not flagZ:
+        draw_line(im,draw, initialPoint[0], startPoint[0], 
+                          initialPoint[1], startPoint[1])
 
     for points in pointsMulty:
         if style['fill'] != None:
@@ -879,11 +884,11 @@ def draw_path(im, draw, descr=None,
                                     style['fill'])
 
             if noPint:
-
-                ImageDraw.floodfill(im, ((points[1][0]
-                                    + points[len(points) - 2][0]) / 2,
-                                    (points[1][1] + points[len(points)
-                                    - 2][1]) / 2), style['fill'])
+                
+                ImageDraw.floodfill(im, ((points[1][0] + points[2][0]) / 2 
+                                    - style["stroke-width"], (points[1][1]
+                                    + points[2][1]) / 2 - style["stroke-width"]),
+                                     style['fill'])
     return im
 
 
@@ -1078,6 +1083,9 @@ def translateCommands(cmdlist):
             output.append(cmd)
             if padding != []:
                 output += padding
+
+        if item[0].lower() == 'z':
+            output.append(["z"])
 
     return output
 

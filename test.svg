@@ -1,27 +1,27 @@
-<svg viewBox="0 -1 30 11" xmlns="http://www.w3.org/2000/svg">
+<svg viewBox="0 -1 300 110" xmlns="http://www.w3.org/2000/svg" stroke-width="5">
 
   <!--
   An open shape with the last point of
   the path different to the first one
   -->
   <path stroke="red"
-        d="M 5,1
-           l -4,8 8,0" />
+        d="M 50,10
+           l -40,80 80,00" />
 
   <!--
   An open shape with the last point of
   the path matching the first one
   -->
   <path stroke="red"
-        d="M 15,1
-           l -4,8 8,0 -4,-8" />
+        d="M 150,10
+           l -40,80 80,00 -40,-80" />
 
   <!--
   A closed shape with the last point of
   the path different to the first one
   -->
   <path stroke="red"
-        d="M 25,1
-           l -4,8 8,0
+        d="M 250,10
+           l -40,80 80,00
            z" />
 </svg>
