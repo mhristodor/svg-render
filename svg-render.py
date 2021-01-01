@@ -575,20 +575,32 @@ def draw_path(im,draw, descr = None, style = {"fill" : None, "stroke" : "Black",
             if cmd[0] == "A":
                 cx,cy,p1,p2 = get_center(startPoint[0], startPoint[1],cmd[1][5][0],cmd[1][5][1],cmd[1][3],cmd[1][4],cmd[1][0],cmd[1][1],cmd[1][2])
 
-                im2 = Image.new('RGBA', (int(cx) + 2 * cmd[1][0], int(cy) + 2 * cmd[1][1]))
+                # im2 = Image.new('RGBA', (int(cx) + 2 * cmd[1][0], int(cy) + 2 * cmd[1][1]))
+                # im2 = Image.new('RGBA', im.size)
+                im2 = Image.new('RGBA', (2 * cmd[1][0] + style["stroke-width"],2 * cmd[1][1] + style["stroke-width"]))
                 draw2 = ImageDraw.Draw(im2)
+                print(cx,cy)
                 
+                # if (cmd[1][3] == 1 and cmd[1][4] == 1) or (cmd[1][3] == 0 and cmd[1][4] == 1):
+                #     draw2.arc([cx-cmd[1][0],cy-cmd[1][1],cx+cmd[1][0],cy+cmd[1][1]],p2 + cmd[1][2],p1+ cmd[1][2] ,style["stroke"],width = style["stroke-width"])
+                # else:
+                #     draw2.arc([cx-cmd[1][0],cy-cmd[1][1],cx+cmd[1][0],cy+cmd[1][1]],p1 + cmd[1][2] ,p2 + cmd[1][2] ,style["stroke"],width = style["stroke-width"])
+
                 if (cmd[1][3] == 1 and cmd[1][4] == 1) or (cmd[1][3] == 0 and cmd[1][4] == 1):
-                    draw2.arc([cx-cmd[1][0],cy-cmd[1][1],cx+cmd[1][0],cy+cmd[1][1]],p2 + cmd[1][2],p1+ cmd[1][2] ,style["stroke"],width = style["stroke-width"])
+                    draw2.arc([0,0,2 * cmd[1][0] + style["stroke-width"],2 * cmd[1][1] + style["stroke-width"]],p2 + cmd[1][2],p1+ cmd[1][2] ,style["stroke"],width = style["stroke-width"])
                 else:
-                    draw2.arc([cx-cmd[1][0],cy-cmd[1][1],cx+cmd[1][0],cy+cmd[1][1]],p1 + cmd[1][2] ,p2 + cmd[1][2] ,style["stroke"],width = style["stroke-width"])
+                    draw2.arc([0,0,2 * cmd[1][0] + style["stroke-width"],2 * cmd[1][1] + style["stroke-width"]],p1 + cmd[1][2],p2 + cmd[1][2] ,style["stroke"],width = style["stroke-width"])
+
+
                 im_new = im2.rotate(cmd[1][2])
                 im_flip = ImageOps.flip(im_new)
+                # im_flip.show()
                 # im_flip = im_new
-                if cmd[1][3] == cmd[1][4]:
-                    offset = (0, 0)
-                else:
-                    offset = (0, int((im.size[1]/2 - startPoint[1])*2 - im.size[1]/2))
+                # if cmd[1][3] == cmd[1][4]:
+                #     offset = (0, 0)
+                # else:
+                #     offset = (0, 0)
+                offset = (int(cx-cmd[1][0] - style["stroke-width"]),int(cy-cmd[1][1] - style["stroke-width"]))
 
                 im.paste(im_flip,offset,mask=im_flip)
 
