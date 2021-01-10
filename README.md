@@ -1,6 +1,6 @@
 ### SVG Renderer
 
-![alt text](./task.bmp "nope")
+![alt text](./task/task.bmp "nope")
 
 Input: python svg-reder.py <input-file.svg>
 Output: input-file.png

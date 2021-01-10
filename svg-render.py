@@ -13,6 +13,7 @@ import argparse
 
 
 def getAngle(cx, cy, x, y):
+    """Returns the angle between the center of a circle and 2 points forming an arc"""
 
     angle = math.atan2(cx - x, cy - y) * (180 / math.pi) + 90
     if angle < 0:
@@ -22,6 +23,7 @@ def getAngle(cx, cy, x, y):
 
 
 def vectorAngle(ux, uy, vx, vy):
+    """Returns the vector angle between 2 vectors"""
 
     sign = None
     if ux * vy - uy * vx < 0:
@@ -37,6 +39,7 @@ def vectorAngle(ux, uy, vx, vy):
 
 
 def get_center(x1, y1, x2, y2, fa, fs, rx, ry, phi):
+    """Returns center and 2 angles of a rotated ellipse"""
 
     sinphi = math.sin(math.radians(phi))
     cosphi = math.cos(math.radians(phi))
@@ -90,6 +93,7 @@ def get_center(x1, y1, x2, y2, fa, fs, rx, ry, phi):
 
 
 def line(p1, p2):
+    """Return line formulae given 2 points"""
     
     A = p1[1] - p2[1]
     B = p2[0] - p1[0]
@@ -99,6 +103,7 @@ def line(p1, p2):
 
 
 def intersection(L1, L2):
+    """Returns the intersection point of 2 lines"""
     
     D = L1[0] * L2[1] - L1[1] * L2[0]
     Dx = L1[2] * L2[1] - L1[1] * L2[2]
@@ -111,18 +116,9 @@ def intersection(L1, L2):
     else:
         return False
 
-
-def getLocation(coorArr, i, j, t):
-    
-    if j == 0:
-        return coorArr[i]
-    
-    return getLocation(coorArr, i, j - 1, t) * (1 - t) \
-        + getLocation(coorArr, i + 1, j - 1, t) * t
-
-
 def draw_rect(im, draw, xcoord=0, ycoord=0, width=0, height=0,
               rx=0, ry=0, style={'fill': None, 'stroke': 'Black', 'stroke-width': 1}):
+    """Draws a rectangle on the specified area"""
 
     style = defaultStyle(style)
 
@@ -177,7 +173,8 @@ def draw_rect(im, draw, xcoord=0, ycoord=0, width=0, height=0,
 
 def draw_circle(im, draw, cx=0, cy=0, r=0,
                 style={'fill': None, 'stroke': 'Black', 'stroke-width': 1}):
-
+    """Draws a circle on the specified area"""
+    
     style = defaultStyle(style)
     draw.arc([cx - r, cy - r, cx + r, cy + r], 0, 360, style['stroke'],
              width=style['stroke-width'])
@@ -192,7 +189,8 @@ def draw_circle(im, draw, cx=0, cy=0, r=0,
 
 def draw_ellipse(im, draw, cx=0, cy=0,
                  rx=0, ry=0, style={'fill': None, 'stroke': 'Black', 'stroke-width': 1}):
-
+    """Draws an ellipse on the specified area"""
+    
     style = defaultStyle(style)
 
     draw.arc([cx - rx, cy - ry, cx + rx, cy + ry], 0, 360,
@@ -208,6 +206,7 @@ def draw_ellipse(im, draw, cx=0, cy=0,
 
 def draw_line(im, draw, x1=0, x2=0, y1=0, y2=0,
               style={'fill': None, 'stroke': 'Black', 'stroke-width': 1}):
+    """Draws a line on the specified area"""
 
     style = defaultStyle(style)
 
@@ -219,6 +218,7 @@ def draw_line(im, draw, x1=0, x2=0, y1=0, y2=0,
 
 def draw_polyline(im, draw, points=[(0, 0)],
                   style={'fill': None, 'stroke': 'Black', 'stroke-width': 1}):
+    """Draws a polyline on the specified area"""
 
     style = defaultStyle(style)
 
@@ -281,6 +281,7 @@ def draw_polyline(im, draw, points=[(0, 0)],
 
 def draw_path(im, draw, descr=None,
               style={'fill': None, 'stroke': 'Black', 'stroke-width': 1}):
+    """Draws a path on the specified area"""
 
     style = defaultStyle(style)
 
@@ -893,6 +894,7 @@ def draw_path(im, draw, descr=None,
 
 
 def parseStyle(subItem, style):
+    """Returns style dictionary after parsing the input"""
 
     style_new = style
 
@@ -921,6 +923,7 @@ def parseStyle(subItem, style):
 
 
 def defaultStyle(style):
+    """Returns style dictionary with default values"""
 
     if 'fill' not in style.keys():
         style['fill'] = (0, 0, 0)
@@ -935,6 +938,8 @@ def defaultStyle(style):
 
 
 def representsInt(s):
+    """Checks if a string represents an integer"""
+
     try:
         int(s)
         return True
@@ -943,11 +948,14 @@ def representsInt(s):
 
 
 def chunks(lst, n):
+    """Returns list separated in n length chunks"""
+
     for i in range(0, len(lst), n):
         yield lst[i:i + n]
 
 
 def translateCommands(cmdlist):
+    """Returns parsed input of Path tag d"""
 
     output = []
     seperateCmds = []
@@ -1092,6 +1100,7 @@ def translateCommands(cmdlist):
 
 def parseSVG(im, draw, root, scale,
              style={'fill': None, 'stroke': 'Black', 'stroke-width': 1}):
+    """Recursive function creating the SVG and sub SVG items"""
 
     style = defaultStyle(style)
     try:
@@ -1266,6 +1275,8 @@ def parseSVG(im, draw, root, scale,
 
 
 def main():
+    """Main function"""
+
     parser = \
         argparse.ArgumentParser(description='SVG renderer by Hristodor Minu-Mihail')
     parser.add_argument('file_path', metavar='file', type=str,
