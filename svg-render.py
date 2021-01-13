@@ -841,7 +841,9 @@ def draw_path(im, draw, descr=None,
 
     if style['fill'] != None and not flagZ:
         draw_line(im,draw, initialPoint[0], startPoint[0], 
-                          initialPoint[1], startPoint[1])
+                          initialPoint[1], startPoint[1],
+                          style={'fill': None, 'stroke': style['fill'], 
+                          'stroke-width': 1})
 
     for points in pointsMulty:
         if style['fill'] != None:
@@ -885,7 +887,6 @@ def draw_path(im, draw, descr=None,
                                     style['fill'])
 
             if noPint:
-                
                 ImageDraw.floodfill(im, ((points[1][0] + points[2][0]) / 2 
                                     - style["stroke-width"], (points[1][1]
                                     + points[2][1]) / 2 - style["stroke-width"]),
@@ -1095,6 +1096,7 @@ def translateCommands(cmdlist):
         if item[0].lower() == 'z':
             output.append(["z"])
 
+    print(output)
     return output
 
 
